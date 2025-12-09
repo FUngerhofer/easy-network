@@ -166,3 +166,65 @@ export function useDeleteOpportunity() {
     },
   });
 }
+
+// Sample opportunities to seed
+const sampleOpportunities = [
+  { title: "Sarah's Birthday", type: 'birthday' as OpportunityType, priority: 'high' as Priority, daysFromNow: 3 },
+  { title: "Follow up on investment opportunity", type: 'follow_up' as OpportunityType, priority: 'high' as Priority, daysFromNow: 1, description: "Discuss the Series B terms" },
+  { title: "Work anniversary congratulations", type: 'milestone' as OpportunityType, priority: 'medium' as Priority, daysFromNow: 5, description: "5 years at the company" },
+  { title: "Quarterly check-in", type: 'check_in' as OpportunityType, priority: 'medium' as Priority, daysFromNow: 7 },
+  { title: "Kid's graduation party invite", type: 'milestone' as OpportunityType, priority: 'high' as Priority, daysFromNow: 0, description: "Emma's high school graduation" },
+  { title: "Book recommendation follow-up", type: 'follow_up' as OpportunityType, priority: 'low' as Priority, daysFromNow: 14, description: "Ask how they liked 'Thinking Fast and Slow'" },
+  { title: "New job congratulations", type: 'milestone' as OpportunityType, priority: 'high' as Priority, daysFromNow: 2, description: "Just became VP of Engineering" },
+  { title: "Wedding anniversary", type: 'milestone' as OpportunityType, priority: 'medium' as Priority, daysFromNow: 10 },
+  { title: "Catch up over coffee", type: 'check_in' as OpportunityType, priority: 'medium' as Priority, daysFromNow: 4, description: "Haven't seen in 3 months" },
+  { title: "Conference introduction", type: 'manual' as OpportunityType, priority: 'high' as Priority, daysFromNow: 1, description: "Introduce to potential investor at TechCrunch" },
+  { title: "Baby shower gift", type: 'milestone' as OpportunityType, priority: 'medium' as Priority, daysFromNow: 8 },
+];
+
+export function useSeedSampleOpportunities() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (contactIds: string[]) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      if (contactIds.length === 0) {
+        throw new Error('No contacts available to assign opportunities');
+      }
+
+      const opportunitiesToInsert = sampleOpportunities.map((opp, index) => {
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + opp.daysFromNow);
+        
+        return {
+          user_id: user.id,
+          contact_id: contactIds[index % contactIds.length],
+          title: opp.title,
+          description: opp.description || null,
+          type: opp.type,
+          priority: opp.priority,
+          due_date: dueDate.toISOString(),
+          is_completed: false,
+        };
+      });
+
+      const { data, error } = await supabase
+        .from('opportunities')
+        .insert(opportunitiesToInsert)
+        .select();
+      
+      if (error) throw error;
+      return data.length;
+    },
+    onSuccess: (count) => {
+      queryClient.invalidateQueries({ queryKey: ['opportunities'] });
+      toast({ title: `Added ${count} sample opportunities!` });
+    },
+    onError: (error) => {
+      toast({ title: 'Failed to add sample opportunities', description: error.message, variant: 'destructive' });
+    },
+  });
+}
