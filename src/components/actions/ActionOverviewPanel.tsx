@@ -256,7 +256,7 @@ export function ActionOverviewPanel({ isOpen, onToggle }: ActionOverviewPanelPro
         {isOpen && (
           <>
             <Separator />
-            <ScrollArea className="max-h-[400px]">
+            <ScrollArea className="h-[400px]">
               <div className="p-3 space-y-4">
                 {isLoading ? (
                   <div className="space-y-3">
@@ -303,7 +303,7 @@ export function ActionOverviewPanel({ isOpen, onToggle }: ActionOverviewPanelPro
                           Upcoming
                         </h3>
                         <div className="space-y-2">
-                          {upcomingItems.slice(0, 3).map(item => (
+                          {upcomingItems.map(item => (
                             <ActionCard
                               key={item.id}
                               item={item}
@@ -315,11 +315,6 @@ export function ActionOverviewPanel({ isOpen, onToggle }: ActionOverviewPanelPro
                               compact
                             />
                           ))}
-                          {upcomingItems.length > 3 && (
-                            <p className="text-xs text-muted-foreground text-center py-1">
-                              +{upcomingItems.length - 3} more upcoming
-                            </p>
-                          )}
                         </div>
                       </div>
                     )}
