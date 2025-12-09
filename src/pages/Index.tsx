@@ -8,10 +8,10 @@ import { LogConversationDialog } from '@/components/contacts/LogConversationDial
 import { AddOpportunityDialog } from '@/components/contacts/AddOpportunityDialog';
 import { ActionOverviewPanel } from '@/components/actions/ActionOverviewPanel';
 import { mockContacts } from '@/data/mockContacts';
-import { useContacts } from '@/hooks/useContacts';
+import { useContacts, useSeedMockContacts } from '@/hooks/useContacts';
 import { useAuth } from '@/hooks/useAuth';
 import { Contact, RelationshipLayer } from '@/types/contact';
-import { Users, Plus, LogOut, AlertCircle, Loader2 } from 'lucide-react';
+import { Users, Plus, LogOut, AlertCircle, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -19,6 +19,7 @@ const Index = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
   const { data: contacts, isLoading: contactsLoading } = useContacts();
+  const seedMockContacts = useSeedMockContacts();
   
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [selectedLayer, setSelectedLayer] = useState<RelationshipLayer | null>(null);
@@ -68,6 +69,10 @@ const Index = () => {
     setSelectedLayer(layer);
   };
 
+  const handleSeedContacts = () => {
+    seedMockContacts.mutate();
+  };
+
   const needsAttentionCount = displayContacts.filter(c => c.needsAttention).length;
   
   const filteredContacts = useMemo(() => {
@@ -93,6 +98,8 @@ const Index = () => {
       </div>
     );
   }
+
+  const showEmptyState = user && !contactsLoading && displayContacts.length === 0;
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
@@ -158,31 +165,71 @@ const Index = () => {
       {/* Main Content */}
       <main className="pt-20 h-screen">
         <div className="relative h-full">
-          {/* Network Graph */}
-          {contactsLoading && user ? (
+          {/* Empty State for authenticated users with no contacts */}
+          {showEmptyState ? (
+            <div className="h-full flex flex-col items-center justify-center gap-6">
+              <div className="text-center max-w-md">
+                <div className="w-20 h-20 rounded-full bg-accent/20 flex items-center justify-center mx-auto mb-4">
+                  <Users className="w-10 h-10 text-accent-foreground/50" />
+                </div>
+                <h2 className="text-2xl font-display font-semibold mb-2">No contacts yet</h2>
+                <p className="text-muted-foreground mb-6">
+                  Start building your network by adding contacts, or load sample data to explore the app.
+                </p>
+                <div className="flex gap-3 justify-center">
+                  <Button 
+                    onClick={() => {
+                      setEditingContact(null);
+                      setShowAddContact(true);
+                    }}
+                    className="gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Contact
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={handleSeedContacts}
+                    disabled={seedMockContacts.isPending}
+                    className="gap-2"
+                  >
+                    {seedMockContacts.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-4 h-4" />
+                    )}
+                    Load Sample Data
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : contactsLoading && user ? (
             <div className="h-full flex items-center justify-center">
               <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <NetworkGraph 
-              contacts={filteredContacts}
-              onContactClick={handleContactClick}
-              selectedLayer={selectedLayer}
-            />
-          )}
+            <>
+              {/* Network Graph */}
+              <NetworkGraph 
+                contacts={filteredContacts}
+                onContactClick={handleContactClick}
+                selectedLayer={selectedLayer}
+              />
 
-          {/* Layer Legend - Bottom Center */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30">
-            <LayerLegend 
-              activeLayer={selectedLayer}
-              onLayerClick={handleLayerClick}
-            />
-          </div>
+              {/* Layer Legend - Bottom Center */}
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30">
+                <LayerLegend 
+                  activeLayer={selectedLayer}
+                  onLayerClick={handleLayerClick}
+                />
+              </div>
+            </>
+          )}
         </div>
       </main>
 
       {/* Action Overview Panel - Top Left */}
-      {user && (
+      {user && !showEmptyState && (
         <ActionOverviewPanel
           isOpen={showActionPanel}
           onToggle={() => setShowActionPanel(!showActionPanel)}
