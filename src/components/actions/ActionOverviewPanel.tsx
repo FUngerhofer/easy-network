@@ -370,10 +370,7 @@ function ActionCard({
         item.isOverdue && "border-destructive/30"
       )}>
         <div className="flex items-center gap-2 min-w-0">
-          <div className={cn(
-            "p-1 rounded",
-            item.isOverdue ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
-          )}>
+          <div className="p-1 rounded bg-primary/10 text-primary">
             {typeIcons[opportunityType] || <CheckCircle2 className="w-3.5 h-3.5" />}
           </div>
           <div className="min-w-0">
