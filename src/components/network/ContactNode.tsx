@@ -155,13 +155,6 @@ export function ContactNode({
         {contact.name.split(' ')[0]}
       </div>
 
-      {/* Attention indicator */}
-      {isDrifted && (
-        <div 
-          className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-destructive animate-pulse"
-          title="Needs attention"
-        />
-      )}
     </button>
   );
 }
