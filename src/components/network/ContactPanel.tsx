@@ -1,23 +1,28 @@
-import { X, Mail, Phone, Building2, Briefcase, Calendar, MessageSquare } from 'lucide-react';
-import { Contact, LAYER_CONFIG } from '@/types/contact';
+import { X, Mail, Phone, Building2, Briefcase, Calendar, MessageSquare, Gift, Pencil } from 'lucide-react';
+import { Contact, LAYER_CONFIG, FREQUENCY_OPTIONS } from '@/types/contact';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 interface ContactPanelProps {
   contact: Contact | null;
   onClose: () => void;
+  onLogConversation?: () => void;
+  onAddOpportunity?: () => void;
+  onEdit?: () => void;
 }
 
-export function ContactPanel({ contact, onClose }: ContactPanelProps) {
+export function ContactPanel({ contact, onClose, onLogConversation, onAddOpportunity, onEdit }: ContactPanelProps) {
   if (!contact) return null;
 
   const config = LAYER_CONFIG[contact.layer];
-  const lastContactText = contact.lastContact 
-    ? formatDistanceToNow(contact.lastContact, { addSuffix: true })
+  const lastContactText = contact.last_contact_at 
+    ? formatDistanceToNow(new Date(contact.last_contact_at), { addSuffix: true })
     : 'Never';
+  
+  const frequencyLabel = FREQUENCY_OPTIONS.find(f => f.value === contact.contact_frequency)?.label || contact.contact_frequency;
 
   return (
     <div className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-card border-l border-border shadow-lg z-50 animate-slide-in-right">
@@ -32,7 +37,7 @@ export function ContactPanel({ contact, onClose }: ContactPanelProps) {
 
         <div className="flex items-center gap-4">
           <Avatar className="w-16 h-16 border-2" style={{ borderColor: `hsl(var(--${config.color}))` }}>
-            <AvatarImage src={contact.avatar} alt={contact.name} />
+            <AvatarImage src={contact.avatar_url} alt={contact.name} />
             <AvatarFallback 
               className="text-lg font-medium"
               style={{ 
@@ -72,14 +77,18 @@ export function ContactPanel({ contact, onClose }: ContactPanelProps) {
       {/* Content */}
       <div className="p-6 space-y-6 overflow-y-auto" style={{ height: 'calc(100% - 120px)' }}>
         {/* Quick Actions */}
-        <div className="flex gap-2">
-          <Button variant="default" size="sm" className="flex-1">
+        <div className="grid grid-cols-2 gap-2">
+          <Button variant="default" size="sm" onClick={onLogConversation}>
             <MessageSquare className="w-4 h-4 mr-2" />
             Log Conversation
           </Button>
-          <Button variant="outline" size="sm" className="flex-1">
-            <Calendar className="w-4 h-4 mr-2" />
-            Schedule
+          <Button variant="outline" size="sm" onClick={onAddOpportunity}>
+            <Gift className="w-4 h-4 mr-2" />
+            Add Opportunity
+          </Button>
+          <Button variant="outline" size="sm" onClick={onEdit} className="col-span-2">
+            <Pencil className="w-4 h-4 mr-2" />
+            Edit Contact
           </Button>
         </div>
 
@@ -122,6 +131,15 @@ export function ContactPanel({ contact, onClose }: ContactPanelProps) {
               <span className="text-sm text-foreground">{contact.role}</span>
             </div>
           )}
+
+          {contact.birthday && (
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+              <Gift className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm text-foreground">
+                Birthday: {format(new Date(contact.birthday), 'MMMM d')}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Last Contact */}
@@ -137,8 +155,8 @@ export function ContactPanel({ contact, onClose }: ContactPanelProps) {
           </div>
           <div className="flex items-center justify-between mt-2">
             <span className="text-sm text-muted-foreground">Contact frequency</span>
-            <span className="text-sm font-medium text-foreground capitalize">
-              {contact.contactFrequency}
+            <span className="text-sm font-medium text-foreground">
+              {frequencyLabel}
             </span>
           </div>
         </div>
@@ -149,7 +167,7 @@ export function ContactPanel({ contact, onClose }: ContactPanelProps) {
             <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">
               Notes
             </h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">
+            <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
               {contact.notes}
             </p>
           </div>

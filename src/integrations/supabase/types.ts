@@ -14,7 +14,181 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      contacts: {
+        Row: {
+          avatar_url: string | null
+          birthday: string | null
+          company: string | null
+          contact_frequency: string
+          created_at: string
+          email: string | null
+          family_members: Json | null
+          id: string
+          initials: string
+          last_contact_at: string | null
+          layer: string
+          name: string
+          notes: string | null
+          phone: string | null
+          role: string | null
+          tags: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          birthday?: string | null
+          company?: string | null
+          contact_frequency?: string
+          created_at?: string
+          email?: string | null
+          family_members?: Json | null
+          id?: string
+          initials: string
+          last_contact_at?: string | null
+          layer?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          role?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          birthday?: string | null
+          company?: string | null
+          contact_frequency?: string
+          created_at?: string
+          email?: string | null
+          family_members?: Json | null
+          id?: string
+          initials?: string
+          last_contact_at?: string | null
+          layer?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          role?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      conversations: {
+        Row: {
+          action_items: string[] | null
+          contact_id: string
+          content: string
+          created_at: string
+          id: string
+          occurred_at: string
+          summary: string | null
+          title: string | null
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action_items?: string[] | null
+          contact_id: string
+          content: string
+          created_at?: string
+          id?: string
+          occurred_at?: string
+          summary?: string | null
+          title?: string | null
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action_items?: string[] | null
+          contact_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          occurred_at?: string
+          summary?: string | null
+          title?: string | null
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opportunities: {
+        Row: {
+          completed_at: string | null
+          contact_id: string
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          is_completed: boolean | null
+          is_recurring: boolean | null
+          priority: string | null
+          recurrence_pattern: string | null
+          suggested_message: string | null
+          title: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          contact_id: string
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          is_completed?: boolean | null
+          is_recurring?: boolean | null
+          priority?: string | null
+          recurrence_pattern?: string | null
+          suggested_message?: string | null
+          title: string
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          contact_id?: string
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          is_completed?: boolean | null
+          is_recurring?: boolean | null
+          priority?: string | null
+          recurrence_pattern?: string | null
+          suggested_message?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunities_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

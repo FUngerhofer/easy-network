@@ -130,7 +130,7 @@ export function ContactNode({
 
       {/* Avatar */}
       <Avatar className="w-12 h-12 border-2 border-card shadow-md transition-shadow duration-300 group-hover:shadow-lg">
-        <AvatarImage src={contact.avatar} alt={contact.name} />
+        <AvatarImage src={contact.avatar_url} alt={contact.name} />
         <AvatarFallback 
           className="text-sm font-medium"
           style={{ 
