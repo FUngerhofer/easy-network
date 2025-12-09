@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Contact, RelationshipLayer, ContactFrequency, FREQUENCY_OPTIONS, FamilyMember } from '@/types/contact';
 import { useToast } from '@/hooks/use-toast';
+import { mockContacts } from '@/data/mockContacts';
 
 function calculateNeedsAttention(contact: Omit<Contact, 'needsAttention'>): boolean {
   // No reminders for contacts with 'none' frequency
@@ -178,6 +179,40 @@ export function useDeleteContact() {
     },
     onError: (error) => {
       toast({ title: 'Failed to delete contact', description: error.message, variant: 'destructive' });
+    },
+  });
+}
+
+export function useSeedMockContacts() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Prepare contacts for insertion (remove mock ids, add user_id)
+      const contactsToInsert = mockContacts.map(({ id, needsAttention, family_members, ...contact }) => ({
+        ...contact,
+        user_id: user.id,
+        family_members: family_members ? JSON.parse(JSON.stringify(family_members)) : [],
+      }));
+
+      const { data, error } = await supabase
+        .from('contacts')
+        .insert(contactsToInsert)
+        .select();
+      
+      if (error) throw error;
+      return data.length;
+    },
+    onSuccess: (count) => {
+      queryClient.invalidateQueries({ queryKey: ['contacts'] });
+      toast({ title: `Added ${count} sample contacts!` });
+    },
+    onError: (error) => {
+      toast({ title: 'Failed to add sample contacts', description: error.message, variant: 'destructive' });
     },
   });
 }
