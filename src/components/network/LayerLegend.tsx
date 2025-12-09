@@ -10,9 +10,11 @@ import {
 interface LayerLegendProps {
   activeLayer?: RelationshipLayer | null;
   onLayerClick?: (layer: RelationshipLayer | null) => void;
+  showDrifting?: boolean;
+  onDriftingClick?: () => void;
 }
 
-export function LayerLegend({ activeLayer, onLayerClick }: LayerLegendProps) {
+export function LayerLegend({ activeLayer, onLayerClick, showDrifting, onDriftingClick }: LayerLegendProps) {
   const handleClick = (layer: RelationshipLayer) => {
     if (activeLayer === layer) {
       onLayerClick?.(null); // Deselect if clicking the same layer
@@ -66,13 +68,28 @@ export function LayerLegend({ activeLayer, onLayerClick }: LayerLegendProps) {
           
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex items-center gap-1.5 px-3 py-1.5">
-                <div className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
-                <span className="text-xs text-muted-foreground">Drifting</span>
-              </div>
+              <button
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all duration-200",
+                  "hover:bg-accent/50",
+                  showDrifting && "bg-destructive/10 ring-2 ring-destructive/30"
+                )}
+                onClick={onDriftingClick}
+              >
+                <div className={cn(
+                  "w-2 h-2 rounded-full bg-destructive",
+                  !showDrifting && "animate-pulse"
+                )} />
+                <span className={cn(
+                  "text-xs font-medium transition-colors",
+                  showDrifting ? "text-destructive" : "text-muted-foreground"
+                )}>
+                  Drifting
+                </span>
+              </button>
             </TooltipTrigger>
             <TooltipContent side="top" className="text-xs">
-              Contacts needing your attention
+              {showDrifting ? 'Click to show all contacts' : 'Click to filter contacts needing attention'}
             </TooltipContent>
           </Tooltip>
         </div>

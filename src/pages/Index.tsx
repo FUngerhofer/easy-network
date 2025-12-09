@@ -5,15 +5,13 @@ import { LayerLegend } from '@/components/network/LayerLegend';
 import { ContactPanel } from '@/components/network/ContactPanel';
 import { AddContactDialog } from '@/components/contacts/AddContactDialog';
 import { LogConversationDialog } from '@/components/contacts/LogConversationDialog';
-import { AddOpportunityDialog } from '@/components/contacts/AddOpportunityDialog';
 import { ActionOverviewPanel } from '@/components/actions/ActionOverviewPanel';
 import { mockContacts } from '@/data/mockContacts';
 import { useContacts, useSeedMockContacts } from '@/hooks/useContacts';
 import { useAuth } from '@/hooks/useAuth';
 import { Contact, RelationshipLayer } from '@/types/contact';
-import { Users, Plus, LogOut, AlertCircle, Loader2, Sparkles } from 'lucide-react';
+import { Users, Plus, LogOut, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -26,7 +24,6 @@ const Index = () => {
   const [showOnlyAttention, setShowOnlyAttention] = useState(false);
   const [showAddContact, setShowAddContact] = useState(false);
   const [showLogConversation, setShowLogConversation] = useState(false);
-  const [showAddOpportunity, setShowAddOpportunity] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [showActionPanel, setShowActionPanel] = useState(false);
 
@@ -47,12 +44,6 @@ const Index = () => {
     }
   };
 
-  const handleAddOpportunity = () => {
-    if (selectedContact) {
-      setShowAddOpportunity(true);
-    }
-  };
-
   const handleEditContact = () => {
     if (selectedContact) {
       setEditingContact(selectedContact);
@@ -67,6 +58,14 @@ const Index = () => {
 
   const handleLayerClick = (layer: RelationshipLayer | null) => {
     setSelectedLayer(layer);
+  };
+
+  const handleDriftingClick = () => {
+    setShowOnlyAttention(!showOnlyAttention);
+    // Clear layer filter when toggling drifting
+    if (!showOnlyAttention) {
+      setSelectedLayer(null);
+    }
   };
 
   const handleSeedContacts = () => {
@@ -121,16 +120,6 @@ const Index = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            <Button 
-              variant={showOnlyAttention ? "default" : "outline"}
-              size="sm" 
-              className={cn("gap-2", showOnlyAttention && "bg-destructive hover:bg-destructive/90")}
-              onClick={() => setShowOnlyAttention(!showOnlyAttention)}
-            >
-              <AlertCircle className="w-4 h-4" />
-              {needsAttentionCount} Need Attention
-            </Button>
-            
             <Button 
               size="sm" 
               className="gap-2"
@@ -221,6 +210,8 @@ const Index = () => {
                 <LayerLegend 
                   activeLayer={selectedLayer}
                   onLayerClick={handleLayerClick}
+                  showDrifting={showOnlyAttention}
+                  onDriftingClick={handleDriftingClick}
                 />
               </div>
             </>
@@ -248,7 +239,6 @@ const Index = () => {
             contact={selectedContact}
             onClose={handleClosePanel}
             onLogConversation={handleLogConversation}
-            onAddOpportunity={handleAddOpportunity}
             onEdit={handleEditContact}
           />
         </>
@@ -265,18 +255,11 @@ const Index = () => {
       />
 
       {selectedContact && (
-        <>
-          <LogConversationDialog
-            open={showLogConversation}
-            onOpenChange={setShowLogConversation}
-            contact={selectedContact}
-          />
-          <AddOpportunityDialog
-            open={showAddOpportunity}
-            onOpenChange={setShowAddOpportunity}
-            contact={selectedContact}
-          />
-        </>
+        <LogConversationDialog
+          open={showLogConversation}
+          onOpenChange={setShowLogConversation}
+          contact={selectedContact}
+        />
       )}
     </div>
   );
