@@ -1,17 +1,34 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { NetworkGraph } from '@/components/network/NetworkGraph';
 import { LayerLegend } from '@/components/network/LayerLegend';
 import { ContactPanel } from '@/components/network/ContactPanel';
+import { AddContactDialog } from '@/components/contacts/AddContactDialog';
+import { LogConversationDialog } from '@/components/contacts/LogConversationDialog';
+import { AddOpportunityDialog } from '@/components/contacts/AddOpportunityDialog';
 import { mockContacts } from '@/data/mockContacts';
+import { useContacts } from '@/hooks/useContacts';
+import { useAuth } from '@/hooks/useAuth';
 import { Contact, RelationshipLayer } from '@/types/contact';
-import { Users, Plus, AlertCircle } from 'lucide-react';
+import { Users, Plus, LogOut, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 const Index = () => {
+  const navigate = useNavigate();
+  const { user, loading: authLoading, signOut } = useAuth();
+  const { data: contacts, isLoading: contactsLoading } = useContacts();
+  
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [hoveredLayer, setHoveredLayer] = useState<RelationshipLayer | null>(null);
   const [showOnlyAttention, setShowOnlyAttention] = useState(false);
+  const [showAddContact, setShowAddContact] = useState(false);
+  const [showLogConversation, setShowLogConversation] = useState(false);
+  const [showAddOpportunity, setShowAddOpportunity] = useState(false);
+  const [editingContact, setEditingContact] = useState<Contact | null>(null);
+
+  // Use mock data if not authenticated, real data if authenticated
+  const displayContacts = user ? (contacts || []) : mockContacts;
 
   const handleContactClick = (contact: Contact) => {
     setSelectedContact(contact);
@@ -21,14 +38,46 @@ const Index = () => {
     setSelectedContact(null);
   };
 
-  const needsAttentionCount = mockContacts.filter(c => c.needsAttention).length;
+  const handleLogConversation = () => {
+    if (selectedContact) {
+      setShowLogConversation(true);
+    }
+  };
+
+  const handleAddOpportunity = () => {
+    if (selectedContact) {
+      setShowAddOpportunity(true);
+    }
+  };
+
+  const handleEditContact = () => {
+    if (selectedContact) {
+      setEditingContact(selectedContact);
+      setShowAddContact(true);
+    }
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
+  };
+
+  const needsAttentionCount = displayContacts.filter(c => c.needsAttention).length;
   
   const filteredContacts = useMemo(() => {
     if (showOnlyAttention) {
-      return mockContacts.filter(c => c.needsAttention);
+      return displayContacts.filter(c => c.needsAttention);
     }
-    return mockContacts;
-  }, [showOnlyAttention]);
+    return displayContacts;
+  }, [displayContacts, showOnlyAttention]);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
@@ -44,7 +93,7 @@ const Index = () => {
                 Network
               </h1>
               <p className="text-xs text-muted-foreground">
-                {mockContacts.length} contacts · {needsAttentionCount} need attention
+                {displayContacts.length} contacts · {needsAttentionCount} need attention
               </p>
             </div>
           </div>
@@ -60,10 +109,33 @@ const Index = () => {
               {needsAttentionCount} Need Attention
             </Button>
             
-            <Button size="sm" className="gap-2">
+            <Button 
+              size="sm" 
+              className="gap-2"
+              onClick={() => {
+                if (!user) {
+                  navigate('/auth');
+                } else {
+                  setEditingContact(null);
+                  setShowAddContact(true);
+                }
+              }}
+            >
               <Plus className="w-4 h-4" />
               Add Contact
             </Button>
+
+            {user && (
+              <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                <LogOut className="w-4 h-4" />
+              </Button>
+            )}
+
+            {!user && (
+              <Button variant="outline" size="sm" onClick={() => navigate('/auth')}>
+                Sign In
+              </Button>
+            )}
           </div>
         </div>
       </header>
@@ -80,10 +152,16 @@ const Index = () => {
           </div>
 
           {/* Network Graph */}
-          <NetworkGraph 
-            contacts={filteredContacts}
-            onContactClick={handleContactClick}
-          />
+          {contactsLoading && user ? (
+            <div className="h-full flex items-center justify-center">
+              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <NetworkGraph 
+              contacts={filteredContacts}
+              onContactClick={handleContactClick}
+            />
+          )}
         </div>
       </main>
 
@@ -98,6 +176,34 @@ const Index = () => {
           <ContactPanel 
             contact={selectedContact}
             onClose={handleClosePanel}
+            onLogConversation={handleLogConversation}
+            onAddOpportunity={handleAddOpportunity}
+            onEdit={handleEditContact}
+          />
+        </>
+      )}
+
+      {/* Dialogs */}
+      <AddContactDialog
+        open={showAddContact}
+        onOpenChange={(open) => {
+          setShowAddContact(open);
+          if (!open) setEditingContact(null);
+        }}
+        editContact={editingContact || undefined}
+      />
+
+      {selectedContact && (
+        <>
+          <LogConversationDialog
+            open={showLogConversation}
+            onOpenChange={setShowLogConversation}
+            contact={selectedContact}
+          />
+          <AddOpportunityDialog
+            open={showAddOpportunity}
+            onOpenChange={setShowAddOpportunity}
+            contact={selectedContact}
           />
         </>
       )}
