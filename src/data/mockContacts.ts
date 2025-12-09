@@ -1,10 +1,31 @@
-import { Contact } from '@/types/contact';
+import { Contact, FREQUENCY_OPTIONS, RelationshipLayer, ContactFrequency } from '@/types/contact';
 
 // Cartoon-style avatar URLs using DiceBear Avatars API
 const getCartoonAvatar = (seed: string) => 
   `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(seed)}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
 
-export const mockContacts: Contact[] = [
+// Helper to calculate needsAttention and isOverdue for mock data
+function calculateMockAttention(lastContactAt: string | undefined, frequency: ContactFrequency): { needsAttention: boolean; isOverdue: boolean } {
+  if (frequency === 'none') return { needsAttention: false, isOverdue: false };
+  if (!lastContactAt) return { needsAttention: true, isOverdue: true };
+  
+  const lastContact = new Date(lastContactAt);
+  const now = new Date();
+  const daysSinceContact = Math.floor((now.getTime() - lastContact.getTime()) / (1000 * 60 * 60 * 24));
+  
+  const frequencyConfig = FREQUENCY_OPTIONS.find(f => f.value === frequency);
+  const fullThresholdDays = frequencyConfig?.days || 30;
+  const warningThresholdDays = fullThresholdDays * 0.8;
+  
+  return {
+    needsAttention: daysSinceContact >= warningThresholdDays,
+    isOverdue: daysSinceContact >= fullThresholdDays,
+  };
+}
+
+type RawContact = Omit<Contact, 'needsAttention' | 'isOverdue'>;
+
+const rawMockContacts: RawContact[] = [
   // VIP Layer
   {
     id: '1',
@@ -15,7 +36,6 @@ export const mockContacts: Contact[] = [
     layer: 'vip',
     last_contact_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
     contact_frequency: 'weekly',
-    needsAttention: false,
     email: 'sarah.johnson@example.com',
     phone: '+1 555-0101',
     company: 'TechCorp',
@@ -35,7 +55,6 @@ export const mockContacts: Contact[] = [
     layer: 'vip',
     last_contact_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
     contact_frequency: 'weekly',
-    needsAttention: true,
     email: 'david.park@example.com',
     company: 'StartupXYZ',
     role: 'Co-Founder',
@@ -54,7 +73,6 @@ export const mockContacts: Contact[] = [
     layer: 'vip',
     last_contact_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
     contact_frequency: 'weekly',
-    needsAttention: false,
     email: 'sofia.r@example.com',
     phone: '+1 555-0202',
     company: 'Innovation Labs',
@@ -73,7 +91,6 @@ export const mockContacts: Contact[] = [
     layer: 'vip',
     last_contact_at: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
     contact_frequency: 'weekly',
-    needsAttention: true,
     email: 'marcus.c@example.com',
     company: 'Angel Fund',
     role: 'Managing Partner',
@@ -92,7 +109,6 @@ export const mockContacts: Contact[] = [
     layer: 'inner',
     last_contact_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
     contact_frequency: 'biweekly',
-    needsAttention: false,
     email: 'lisa.m@example.com',
     company: 'Design Studio',
     role: 'Creative Director',
@@ -110,7 +126,6 @@ export const mockContacts: Contact[] = [
     layer: 'inner',
     last_contact_at: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
     contact_frequency: 'biweekly',
-    needsAttention: true,
     email: 'mchen@example.com',
     company: 'Venture Capital Inc',
     role: 'Partner',
@@ -128,7 +143,6 @@ export const mockContacts: Contact[] = [
     layer: 'inner',
     last_contact_at: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
     contact_frequency: 'biweekly',
-    needsAttention: false,
     email: 'alex.t@example.com',
     company: 'Growth Partners',
     role: 'Head of Sales',
@@ -146,7 +160,6 @@ export const mockContacts: Contact[] = [
     layer: 'inner',
     last_contact_at: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
     contact_frequency: 'biweekly',
-    needsAttention: false,
     email: 'diana.o@example.com',
     phone: '+1 555-0303',
     company: 'Startup Hub',
@@ -165,7 +178,6 @@ export const mockContacts: Contact[] = [
     layer: 'inner',
     last_contact_at: new Date(Date.now() - 16 * 24 * 60 * 60 * 1000).toISOString(),
     contact_frequency: 'biweekly',
-    needsAttention: true,
     email: 'jordan.b@example.com',
     company: 'Product Labs',
     role: 'VP Product',
@@ -183,7 +195,6 @@ export const mockContacts: Contact[] = [
     layer: 'inner',
     last_contact_at: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
     contact_frequency: 'biweekly',
-    needsAttention: false,
     email: 'priya.s@example.com',
     company: 'Data Science Co',
     role: 'Head of AI',
@@ -202,7 +213,6 @@ export const mockContacts: Contact[] = [
     layer: 'regular',
     last_contact_at: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString(),
     contact_frequency: 'monthly',
-    needsAttention: false,
     email: 'emma.w@example.com',
     company: 'Marketing Pro',
     role: 'CMO',
@@ -220,7 +230,6 @@ export const mockContacts: Contact[] = [
     layer: 'regular',
     last_contact_at: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
     contact_frequency: 'monthly',
-    needsAttention: true,
     email: 'james.t@example.com',
     company: 'Legal Partners LLP',
     role: 'Attorney',
@@ -238,7 +247,6 @@ export const mockContacts: Contact[] = [
     layer: 'regular',
     last_contact_at: new Date(Date.now() - 18 * 24 * 60 * 60 * 1000).toISOString(),
     contact_frequency: 'monthly',
-    needsAttention: false,
     email: 'maya.p@example.com',
     company: 'FinTech Corp',
     role: 'Product Manager',
@@ -256,7 +264,6 @@ export const mockContacts: Contact[] = [
     layer: 'regular',
     last_contact_at: new Date(Date.now() - 22 * 24 * 60 * 60 * 1000).toISOString(),
     contact_frequency: 'monthly',
-    needsAttention: false,
     email: 'ryan.f@example.com',
     company: 'Scale Ventures',
     role: 'Associate',
@@ -274,7 +281,6 @@ export const mockContacts: Contact[] = [
     layer: 'regular',
     last_contact_at: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString(),
     contact_frequency: 'monthly',
-    needsAttention: true,
     email: 'olivia.k@example.com',
     company: 'Brand Agency',
     role: 'Brand Strategist',
@@ -292,7 +298,6 @@ export const mockContacts: Contact[] = [
     layer: 'regular',
     last_contact_at: new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString(),
     contact_frequency: 'monthly',
-    needsAttention: false,
     email: 'ethan.b@example.com',
     company: 'CloudOps',
     role: 'DevOps Lead',
@@ -311,7 +316,6 @@ export const mockContacts: Contact[] = [
     layer: 'occasional',
     last_contact_at: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
     contact_frequency: 'quarterly',
-    needsAttention: false,
     email: 'anna.k@example.com',
     company: 'Tech Conference',
     role: 'Event Organizer',
@@ -329,7 +333,6 @@ export const mockContacts: Contact[] = [
     layer: 'occasional',
     last_contact_at: new Date(Date.now() - 120 * 24 * 60 * 60 * 1000).toISOString(),
     contact_frequency: 'quarterly',
-    needsAttention: true,
     email: 'r.kim@example.com',
     company: 'Global Enterprises',
     role: 'VP Sales',
@@ -347,7 +350,6 @@ export const mockContacts: Contact[] = [
     layer: 'occasional',
     last_contact_at: new Date(Date.now() - 75 * 24 * 60 * 60 * 1000).toISOString(),
     contact_frequency: 'quarterly',
-    needsAttention: false,
     email: 'chris.b@example.com',
     company: 'Media Group',
     role: 'Journalist',
@@ -365,7 +367,6 @@ export const mockContacts: Contact[] = [
     layer: 'occasional',
     last_contact_at: new Date(Date.now() - 85 * 24 * 60 * 60 * 1000).toISOString(),
     contact_frequency: 'quarterly',
-    needsAttention: false,
     email: 'hannah.l@example.com',
     company: 'HR Solutions',
     role: 'Recruiter',
@@ -383,7 +384,6 @@ export const mockContacts: Contact[] = [
     layer: 'occasional',
     last_contact_at: new Date(Date.now() - 95 * 24 * 60 * 60 * 1000).toISOString(),
     contact_frequency: 'quarterly',
-    needsAttention: true,
     email: 'daniel.w@example.com',
     company: 'Accounting Firm',
     role: 'CPA',
@@ -401,7 +401,6 @@ export const mockContacts: Contact[] = [
     layer: 'occasional',
     last_contact_at: new Date(Date.now() - 70 * 24 * 60 * 60 * 1000).toISOString(),
     contact_frequency: 'quarterly',
-    needsAttention: false,
     email: 'sophia.t@example.com',
     company: 'Design Co',
     role: 'UX Designer',
@@ -420,7 +419,6 @@ export const mockContacts: Contact[] = [
     layer: 'distant',
     last_contact_at: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString(),
     contact_frequency: 'yearly',
-    needsAttention: false,
     email: 'patricia.l@example.com',
     company: 'University',
     role: 'Professor',
@@ -438,7 +436,6 @@ export const mockContacts: Contact[] = [
     layer: 'distant',
     last_contact_at: new Date(Date.now() - 400 * 24 * 60 * 60 * 1000).toISOString(),
     contact_frequency: 'yearly',
-    needsAttention: true,
     email: 'tom.b@example.com',
     company: 'Old Company',
     role: 'Former Manager',
@@ -456,7 +453,6 @@ export const mockContacts: Contact[] = [
     layer: 'distant',
     last_contact_at: new Date(Date.now() - 250 * 24 * 60 * 60 * 1000).toISOString(),
     contact_frequency: 'yearly',
-    needsAttention: false,
     email: 'nathan.w@example.com',
     company: 'Consulting Inc',
     role: 'Senior Consultant',
@@ -474,7 +470,6 @@ export const mockContacts: Contact[] = [
     layer: 'distant',
     last_contact_at: new Date(Date.now() - 300 * 24 * 60 * 60 * 1000).toISOString(),
     contact_frequency: 'yearly',
-    needsAttention: false,
     email: 'rachel.g@example.com',
     company: 'Fashion Inc',
     role: 'Buyer',
@@ -492,7 +487,6 @@ export const mockContacts: Contact[] = [
     layer: 'distant',
     last_contact_at: new Date(Date.now() - 350 * 24 * 60 * 60 * 1000).toISOString(),
     contact_frequency: 'yearly',
-    needsAttention: true,
     email: 'kevin.n@example.com',
     company: 'Restaurant Group',
     role: 'Owner',
@@ -510,7 +504,6 @@ export const mockContacts: Contact[] = [
     layer: 'distant',
     last_contact_at: new Date(Date.now() - 200 * 24 * 60 * 60 * 1000).toISOString(),
     contact_frequency: 'yearly',
-    needsAttention: false,
     email: 'michelle.a@example.com',
     company: 'Non-Profit Org',
     role: 'Director',
@@ -520,6 +513,12 @@ export const mockContacts: Contact[] = [
     updated_at: new Date().toISOString(),
   },
 ];
+
+// Export with calculated needsAttention and isOverdue
+export const mockContacts: Contact[] = rawMockContacts.map(contact => ({
+  ...contact,
+  ...calculateMockAttention(contact.last_contact_at, contact.contact_frequency),
+}));
 
 // Mock opportunities for demo purposes
 export const mockOpportunities = [

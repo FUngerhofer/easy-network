@@ -4,19 +4,23 @@ import { Contact, RelationshipLayer, ContactFrequency, FREQUENCY_OPTIONS, Family
 import { useToast } from '@/hooks/use-toast';
 import { mockContacts } from '@/data/mockContacts';
 
-function calculateNeedsAttention(contact: Omit<Contact, 'needsAttention'>): boolean {
+function calculateAttentionStatus(contact: Omit<Contact, 'needsAttention' | 'isOverdue'>): { needsAttention: boolean; isOverdue: boolean } {
   // No reminders for contacts with 'none' frequency
-  if (contact.contact_frequency === 'none') return false;
-  if (!contact.last_contact_at) return true;
+  if (contact.contact_frequency === 'none') return { needsAttention: false, isOverdue: false };
+  if (!contact.last_contact_at) return { needsAttention: true, isOverdue: true };
   
   const lastContact = new Date(contact.last_contact_at);
   const now = new Date();
   const daysSinceContact = Math.floor((now.getTime() - lastContact.getTime()) / (1000 * 60 * 60 * 24));
   
   const frequencyConfig = FREQUENCY_OPTIONS.find(f => f.value === contact.contact_frequency);
-  const thresholdDays = frequencyConfig?.days ? frequencyConfig.days * 0.8 : 30;
+  const fullThresholdDays = frequencyConfig?.days || 30;
+  const warningThresholdDays = fullThresholdDays * 0.8;
   
-  return daysSinceContact >= thresholdDays;
+  const needsAttention = daysSinceContact >= warningThresholdDays;
+  const isOverdue = daysSinceContact >= fullThresholdDays;
+  
+  return { needsAttention, isOverdue };
 }
 
 function mapDbContactToContact(dbContact: any): Contact {
@@ -39,7 +43,7 @@ function mapDbContactToContact(dbContact: any): Contact {
     family_members: dbContact.family_members as FamilyMember[] | undefined,
     created_at: dbContact.created_at,
     updated_at: dbContact.updated_at,
-    needsAttention: calculateNeedsAttention({
+    ...calculateAttentionStatus({
       ...dbContact,
       layer: dbContact.layer as RelationshipLayer,
       contact_frequency: dbContact.contact_frequency as ContactFrequency,
