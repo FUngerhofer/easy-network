@@ -27,19 +27,31 @@ export function ContactNode({
   const [isDragging, setIsDragging] = useState(false);
   const [currentX, setCurrentX] = useState(x);
   const [currentY, setCurrentY] = useState(y);
+  const hasDraggedRef = useRef(false);
   const nodeRef = useRef<HTMLButtonElement>(null);
   
-  const config = LAYER_CONFIG[effectiveLayer];
   const originalConfig = LAYER_CONFIG[contact.layer];
   const isDrifted = contact.needsAttention;
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsDragging(true);
+    hasDraggedRef.current = false;
+    
+    const startX = e.clientX;
+    const startY = e.clientY;
     
     const handleMouseMove = (moveEvent: MouseEvent) => {
-      if (!nodeRef.current) return;
+      const deltaX = Math.abs(moveEvent.clientX - startX);
+      const deltaY = Math.abs(moveEvent.clientY - startY);
+      
+      // Only start dragging if moved more than 5px
+      if (deltaX > 5 || deltaY > 5) {
+        hasDraggedRef.current = true;
+        setIsDragging(true);
+      }
+      
+      if (!hasDraggedRef.current || !nodeRef.current) return;
       
       const parent = nodeRef.current.parentElement;
       if (!parent) return;
@@ -71,10 +83,13 @@ export function ContactNode({
   }, [radius, contact.id, onAngleChange]);
 
   const handleClick = useCallback((e: React.MouseEvent) => {
-    if (!isDragging) {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only trigger click if we haven't dragged
+    if (!hasDraggedRef.current) {
       onClick();
     }
-  }, [isDragging, onClick]);
+  }, [onClick]);
 
   const displayX = isDragging ? currentX : x;
   const displayY = isDragging ? currentY : y;
@@ -87,7 +102,7 @@ export function ContactNode({
       className={cn(
         "absolute z-20 group transition-all duration-300",
         isDragging ? "cursor-grabbing scale-110 z-40" : "cursor-grab hover:scale-110 hover:z-30",
-        isDrifted && !isDragging && "animate-drift-out"
+        isDrifted && !isDragging && "animate-pulse-soft"
       )}
       style={{
         left: `calc(50% + ${displayX}px)`,
