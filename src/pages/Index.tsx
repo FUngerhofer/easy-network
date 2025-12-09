@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { NetworkGraph } from '@/components/network/NetworkGraph';
 import { LayerLegend } from '@/components/network/LayerLegend';
 import { ContactPanel } from '@/components/network/ContactPanel';
@@ -8,6 +9,7 @@ import { LogConversationDialog } from '@/components/contacts/LogConversationDial
 import { ActionOverviewPanel } from '@/components/actions/ActionOverviewPanel';
 import { mockContacts } from '@/data/mockContacts';
 import { useContacts, useSeedMockContacts } from '@/hooks/useContacts';
+import { useSeedSampleOpportunities } from '@/hooks/useOpportunities';
 import { useAuth } from '@/hooks/useAuth';
 import { Contact, RelationshipLayer } from '@/types/contact';
 import { Users, Plus, LogOut, Loader2, Sparkles } from 'lucide-react';
@@ -18,6 +20,7 @@ const Index = () => {
   const { user, loading: authLoading, signOut } = useAuth();
   const { data: contacts, isLoading: contactsLoading } = useContacts();
   const seedMockContacts = useSeedMockContacts();
+  const seedSampleOpportunities = useSeedSampleOpportunities();
   
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [selectedLayer, setSelectedLayer] = useState<RelationshipLayer | null>(null);
@@ -68,8 +71,13 @@ const Index = () => {
     }
   };
 
-  const handleSeedContacts = () => {
-    seedMockContacts.mutate();
+  const handleSeedContacts = async () => {
+    const result = await seedMockContacts.mutateAsync();
+    // Wait a moment for contacts to be available, then seed opportunities
+    const { data: newContacts } = await supabase.from('contacts').select('id');
+    if (newContacts && newContacts.length > 0) {
+      await seedSampleOpportunities.mutateAsync(newContacts.map(c => c.id));
+    }
   };
 
   const needsAttentionCount = displayContacts.filter(c => c.needsAttention).length;
@@ -179,10 +187,10 @@ const Index = () => {
                   <Button 
                     variant="outline" 
                     onClick={handleSeedContacts}
-                    disabled={seedMockContacts.isPending}
+                    disabled={seedMockContacts.isPending || seedSampleOpportunities.isPending}
                     className="gap-2"
                   >
-                    {seedMockContacts.isPending ? (
+                    {(seedMockContacts.isPending || seedSampleOpportunities.isPending) ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
                       <Sparkles className="w-4 h-4" />

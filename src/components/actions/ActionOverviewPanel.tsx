@@ -24,6 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useOpportunities, useCompleteOpportunity } from '@/hooks/useOpportunities';
 import { useContacts } from '@/hooks/useContacts';
 import { useGenerateSuggestedMessage } from '@/hooks/useGenerateSuggestedMessage';
+import { useCreateConversation } from '@/hooks/useConversations';
 import { Opportunity, Contact, RelationshipLayer } from '@/types/contact';
 import { cn } from '@/lib/utils';
 
@@ -101,6 +102,7 @@ export function ActionOverviewPanel({ isOpen, onToggle }: ActionOverviewPanelPro
   const { data: opportunities = [], isLoading: oppsLoading } = useOpportunities();
   const { data: contacts = [], isLoading: contactsLoading } = useContacts();
   const completeOpportunity = useCompleteOpportunity();
+  const createConversation = useCreateConversation();
   const generateMessage = useGenerateSuggestedMessage();
   const [generatingFor, setGeneratingFor] = useState<string | null>(null);
   const [generatedMessages, setGeneratedMessages] = useState<Record<string, string>>({});
@@ -193,14 +195,23 @@ export function ActionOverviewPanel({ isOpen, onToggle }: ActionOverviewPanelPro
   };
 
   const handleComplete = async (item: ActionItem) => {
-    if (item.type === 'opportunity' && item.opportunity) {
-      await completeOpportunity.mutateAsync(item.opportunity.id);
-    } else if (item.type === 'contact-reminder') {
-      toast({ 
-        title: 'Reminder dismissed', 
-        description: 'Log a conversation to update the last contact date' 
+    // Log a conversation for this action
+    if (item.contact) {
+      await createConversation.mutateAsync({
+        contact_id: item.contact.id,
+        user_id: '', // Will be set by hook
+        type: 'note',
+        content: `Completed: ${item.title}${item.description ? ` - ${item.description}` : ''}`,
+        title: item.title,
+        occurred_at: new Date().toISOString(),
       });
     }
+
+    if (item.type === 'opportunity' && item.opportunity) {
+      await completeOpportunity.mutateAsync(item.opportunity.id);
+    }
+    
+    toast({ title: 'Marked as done', description: 'Conversation logged automatically' });
   };
 
   const isLoading = oppsLoading || contactsLoading;
