@@ -9,60 +9,72 @@ interface NetworkGraphProps {
   onContactClick: (contact: Contact) => void;
 }
 
+// Generate a seeded random number based on contact id for consistent positioning
+function seededRandom(seed: string): number {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    const char = seed.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return Math.abs(Math.sin(hash)) ;
+}
+
 export function NetworkGraph({ contacts, onContactClick }: NetworkGraphProps) {
   const [hoveredLayer, setHoveredLayer] = useState<RelationshipLayer | null>(null);
   const [contactAngles, setContactAngles] = useState<Record<string, number>>({});
 
-  // Group contacts by layer
-  const contactsByLayer = useMemo(() => {
-    const grouped: Record<RelationshipLayer, Contact[]> = {
-      vip: [],
-      inner: [],
-      regular: [],
-      occasional: [],
-      distant: [],
-    };
-
-    contacts.forEach((contact) => {
-      // If needs attention, shift to next layer (visual drift)
-      const effectiveLayer = contact.needsAttention && contact.layer !== 'distant'
-        ? LAYER_ORDER[LAYER_ORDER.indexOf(contact.layer) + 1]
-        : contact.layer;
-      grouped[effectiveLayer].push(contact);
-    });
-
-    return grouped;
-  }, [contacts]);
-
-  // Calculate positions for contacts in each layer
+  // Calculate positions for contacts - drifting on edge, others within ring
   const positionedContacts = useMemo(() => {
     const result: Array<{ contact: Contact; x: number; y: number; angle: number; radius: number; effectiveLayer: RelationshipLayer }> = [];
 
-    LAYER_ORDER.forEach((layer) => {
-      const layerContacts = contactsByLayer[layer];
-      const radius = LAYER_CONFIG[layer].radius;
-      const angleStep = (2 * Math.PI) / Math.max(layerContacts.length, 1);
-      const startAngle = -Math.PI / 2; // Start from top
+    // Get layer boundaries
+    const getLayerBounds = (layer: RelationshipLayer) => {
+      const layerIndex = LAYER_ORDER.indexOf(layer);
+      const outerRadius = LAYER_CONFIG[layer].radius;
+      const innerRadius = layerIndex > 0 ? LAYER_CONFIG[LAYER_ORDER[layerIndex - 1]].radius + 20 : 50;
+      return { innerRadius, outerRadius };
+    };
 
-      layerContacts.forEach((contact, index) => {
-        const defaultAngle = startAngle + angleStep * index + (layer === 'vip' ? 0 : Math.PI / 6);
-        const angle = contactAngles[contact.id] ?? defaultAngle;
-        const x = Math.cos(angle) * radius;
-        const y = Math.sin(angle) * radius;
-        
-        result.push({
-          contact,
-          x,
-          y,
-          angle,
-          radius,
-          effectiveLayer: layer,
-        });
+    contacts.forEach((contact) => {
+      const isDrifting = contact.needsAttention;
+      
+      // Determine effective layer for drifting contacts
+      const effectiveLayer = isDrifting && contact.layer !== 'distant'
+        ? LAYER_ORDER[LAYER_ORDER.indexOf(contact.layer) + 1]
+        : contact.layer;
+      
+      const { innerRadius, outerRadius } = getLayerBounds(effectiveLayer);
+      
+      // Use seeded random for consistent angle
+      const randomAngle = seededRandom(contact.id) * Math.PI * 2;
+      const angle = contactAngles[contact.id] ?? randomAngle;
+      
+      let radius: number;
+      if (isDrifting) {
+        // Drifting contacts sit on the outer edge of their effective layer
+        radius = outerRadius;
+      } else {
+        // Normal contacts are randomly distributed within the ring
+        const randomRadius = seededRandom(contact.id + 'radius');
+        radius = innerRadius + (outerRadius - innerRadius) * (0.3 + randomRadius * 0.5);
+      }
+      
+      const x = Math.cos(angle) * radius;
+      const y = Math.sin(angle) * radius;
+      
+      result.push({
+        contact,
+        x,
+        y,
+        angle,
+        radius,
+        effectiveLayer,
       });
     });
 
     return result;
-  }, [contactsByLayer, contactAngles]);
+  }, [contacts, contactAngles]);
 
   const handleAngleChange = useCallback((contactId: string, newAngle: number) => {
     setContactAngles(prev => ({ ...prev, [contactId]: newAngle }));
