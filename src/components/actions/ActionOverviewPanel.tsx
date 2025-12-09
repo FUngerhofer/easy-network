@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
 import { format, isToday, isTomorrow, isThisWeek, isPast, differenceInDays } from 'date-fns';
 import { 
-  ChevronLeft, 
-  ChevronRight, 
+  ChevronDown,
+  ChevronUp,
   Gift, 
   MessageCircle, 
   Clock, 
@@ -11,7 +11,8 @@ import {
   Sparkles,
   CalendarDays,
   AlertTriangle,
-  Loader2
+  Loader2,
+  ListTodo
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -51,12 +52,12 @@ const priorityColors: Record<string, string> = {
 };
 
 const typeIcons: Record<string, React.ReactNode> = {
-  birthday: <Gift className="w-4 h-4" />,
-  follow_up: <MessageCircle className="w-4 h-4" />,
-  milestone: <CalendarDays className="w-4 h-4" />,
-  check_in: <Clock className="w-4 h-4" />,
-  manual: <CheckCircle2 className="w-4 h-4" />,
-  'contact-reminder': <AlertTriangle className="w-4 h-4" />,
+  birthday: <Gift className="w-3.5 h-3.5" />,
+  follow_up: <MessageCircle className="w-3.5 h-3.5" />,
+  milestone: <CalendarDays className="w-3.5 h-3.5" />,
+  check_in: <Clock className="w-3.5 h-3.5" />,
+  manual: <CheckCircle2 className="w-3.5 h-3.5" />,
+  'contact-reminder': <AlertTriangle className="w-3.5 h-3.5" />,
 };
 
 function getUrgencyLabel(date: Date | undefined): string {
@@ -195,7 +196,6 @@ export function ActionOverviewPanel({ isOpen, onToggle }: ActionOverviewPanelPro
     if (item.type === 'opportunity' && item.opportunity) {
       await completeOpportunity.mutateAsync(item.opportunity.id);
     } else if (item.type === 'contact-reminder') {
-      // For contact reminders, we just mark as done (user should log a conversation)
       toast({ 
         title: 'Reminder dismissed', 
         description: 'Log a conversation to update the last contact date' 
@@ -207,129 +207,130 @@ export function ActionOverviewPanel({ isOpen, onToggle }: ActionOverviewPanelPro
 
   const todayItems = actionItems.filter(item => item.dueDate && (isToday(item.dueDate) || (isPast(item.dueDate) && !isToday(item.dueDate))));
   const upcomingItems = actionItems.filter(item => item.dueDate && !isToday(item.dueDate) && !isPast(item.dueDate));
-  const noDateItems = actionItems.filter(item => !item.dueDate);
+
+  const todayCount = todayItems.length;
+  const totalCount = actionItems.length;
 
   return (
-    <>
-      {/* Toggle Button */}
-      <Button
-        variant="outline"
-        size="icon"
-        className={cn(
-          "fixed top-24 z-50 transition-all duration-300 bg-background shadow-lg",
-          isOpen ? "right-[340px]" : "right-4"
-        )}
-        onClick={onToggle}
-      >
-        {isOpen ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-      </Button>
-
-      {/* Panel */}
-      <div
-        className={cn(
-          "fixed top-20 right-0 h-[calc(100vh-5rem)] w-[340px] bg-background border-l z-40 transition-transform duration-300",
-          isOpen ? "translate-x-0" : "translate-x-full"
-        )}
-      >
-        <div className="p-4 border-b">
-          <h2 className="text-lg font-display font-semibold flex items-center gap-2">
-            <CalendarDays className="w-5 h-5 text-primary" />
-            Action Overview
-          </h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            {actionItems.length} actions pending
-          </p>
-        </div>
-
-        <ScrollArea className="h-[calc(100%-80px)]">
-          <div className="p-4 space-y-6">
-            {isLoading ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map(i => (
-                  <Skeleton key={i} className="h-24 w-full" />
-                ))}
-              </div>
-            ) : actionItems.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <CheckCircle2 className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p className="font-medium">All caught up!</p>
-                <p className="text-sm">No actions needed right now</p>
-              </div>
+    <div className="fixed top-24 left-6 z-50">
+      <Card className={cn(
+        "shadow-xl border-border/50 bg-card/95 backdrop-blur-md transition-all duration-300",
+        isOpen ? "w-[320px]" : "w-auto"
+      )}>
+        {/* Collapsed Header / Toggle */}
+        <button
+          onClick={onToggle}
+          className={cn(
+            "w-full flex items-center justify-between p-3 hover:bg-accent/50 transition-colors rounded-t-lg",
+            !isOpen && "rounded-b-lg"
+          )}
+        >
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-md bg-primary/10">
+              <ListTodo className="w-4 h-4 text-primary" />
+            </div>
+            <div className="text-left">
+              <p className="text-sm font-medium">Actions</p>
+              {!isOpen && (
+                <p className="text-xs text-muted-foreground">
+                  {todayCount > 0 ? `${todayCount} today` : 'All clear'}
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {todayCount > 0 && (
+              <Badge variant="destructive" className="text-xs px-1.5 py-0">
+                {todayCount}
+              </Badge>
+            )}
+            {isOpen ? (
+              <ChevronUp className="w-4 h-4 text-muted-foreground" />
             ) : (
-              <>
-                {/* Today & Overdue */}
-                {todayItems.length > 0 && (
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-destructive" />
-                      Today & Overdue
-                    </h3>
-                    <div className="space-y-3">
-                      {todayItems.map(item => (
-                        <ActionCard
-                          key={item.id}
-                          item={item}
-                          generatedMessage={generatedMessages[item.id]}
-                          isGenerating={generatingFor === item.id}
-                          onComplete={() => handleComplete(item)}
-                          onCopyMessage={handleCopyMessage}
-                          onGenerateMessage={() => handleGenerateMessage(item)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Upcoming */}
-                {upcomingItems.length > 0 && (
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-amber-500" />
-                      Upcoming
-                    </h3>
-                    <div className="space-y-3">
-                      {upcomingItems.map(item => (
-                        <ActionCard
-                          key={item.id}
-                          item={item}
-                          generatedMessage={generatedMessages[item.id]}
-                          isGenerating={generatingFor === item.id}
-                          onComplete={() => handleComplete(item)}
-                          onCopyMessage={handleCopyMessage}
-                          onGenerateMessage={() => handleGenerateMessage(item)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* No Date */}
-                {noDateItems.length > 0 && (
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-3">
-                      Anytime
-                    </h3>
-                    <div className="space-y-3">
-                      {noDateItems.map(item => (
-                        <ActionCard
-                          key={item.id}
-                          item={item}
-                          generatedMessage={generatedMessages[item.id]}
-                          isGenerating={generatingFor === item.id}
-                          onComplete={() => handleComplete(item)}
-                          onCopyMessage={handleCopyMessage}
-                          onGenerateMessage={() => handleGenerateMessage(item)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
+              <ChevronDown className="w-4 h-4 text-muted-foreground" />
             )}
           </div>
-        </ScrollArea>
-      </div>
-    </>
+        </button>
+
+        {/* Expanded Content */}
+        {isOpen && (
+          <>
+            <Separator />
+            <ScrollArea className="max-h-[400px]">
+              <div className="p-3 space-y-4">
+                {isLoading ? (
+                  <div className="space-y-3">
+                    {[1, 2].map(i => (
+                      <Skeleton key={i} className="h-20 w-full" />
+                    ))}
+                  </div>
+                ) : actionItems.length === 0 ? (
+                  <div className="text-center py-6 text-muted-foreground">
+                    <CheckCircle2 className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm font-medium">All caught up!</p>
+                    <p className="text-xs">No actions needed</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Today & Overdue */}
+                    {todayItems.length > 0 && (
+                      <div>
+                        <h3 className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-destructive" />
+                          Today & Overdue
+                        </h3>
+                        <div className="space-y-2">
+                          {todayItems.map(item => (
+                            <ActionCard
+                              key={item.id}
+                              item={item}
+                              generatedMessage={generatedMessages[item.id]}
+                              isGenerating={generatingFor === item.id}
+                              onComplete={() => handleComplete(item)}
+                              onCopyMessage={handleCopyMessage}
+                              onGenerateMessage={() => handleGenerateMessage(item)}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Upcoming */}
+                    {upcomingItems.length > 0 && (
+                      <div>
+                        <h3 className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                          Upcoming
+                        </h3>
+                        <div className="space-y-2">
+                          {upcomingItems.slice(0, 3).map(item => (
+                            <ActionCard
+                              key={item.id}
+                              item={item}
+                              generatedMessage={generatedMessages[item.id]}
+                              isGenerating={generatingFor === item.id}
+                              onComplete={() => handleComplete(item)}
+                              onCopyMessage={handleCopyMessage}
+                              onGenerateMessage={() => handleGenerateMessage(item)}
+                              compact
+                            />
+                          ))}
+                          {upcomingItems.length > 3 && (
+                            <p className="text-xs text-muted-foreground text-center py-1">
+                              +{upcomingItems.length - 3} more upcoming
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </ScrollArea>
+          </>
+        )}
+      </Card>
+    </div>
   );
 }
 
@@ -340,6 +341,7 @@ interface ActionCardProps {
   onComplete: () => void;
   onCopyMessage: (message: string) => void;
   onGenerateMessage: () => void;
+  compact?: boolean;
 }
 
 function ActionCard({ 
@@ -348,44 +350,79 @@ function ActionCard({
   isGenerating, 
   onComplete, 
   onCopyMessage, 
-  onGenerateMessage 
+  onGenerateMessage,
+  compact = false
 }: ActionCardProps) {
+  const [expanded, setExpanded] = useState(false);
   const displayMessage = generatedMessage || item.suggestedMessage;
   const opportunityType = item.opportunity?.type || item.type;
 
+  if (compact) {
+    return (
+      <div className={cn(
+        "flex items-center justify-between p-2 rounded-md border bg-card/50",
+        item.isOverdue && "border-destructive/30"
+      )}>
+        <div className="flex items-center gap-2 min-w-0">
+          <div className={cn(
+            "p-1 rounded",
+            item.isOverdue ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
+          )}>
+            {typeIcons[opportunityType] || <CheckCircle2 className="w-3.5 h-3.5" />}
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-medium truncate">{item.title}</p>
+            <p className="text-[10px] text-muted-foreground">{item.contact?.name}</p>
+          </div>
+        </div>
+        <Badge variant="outline" className={cn("text-[10px] shrink-0", priorityColors[item.priority])}>
+          {getUrgencyLabel(item.dueDate)}
+        </Badge>
+      </div>
+    );
+  }
+
   return (
-    <Card className={cn(
-      "transition-all",
-      item.isOverdue && "border-destructive/50"
+    <div className={cn(
+      "rounded-lg border bg-card/50 transition-all",
+      item.isOverdue && "border-destructive/30"
     )}>
-      <CardHeader className="p-3 pb-2">
+      <div className="p-2.5">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2">
             <div className={cn(
               "p-1.5 rounded-md",
               item.isOverdue ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
             )}>
-              {typeIcons[opportunityType] || <CheckCircle2 className="w-4 h-4" />}
+              {typeIcons[opportunityType] || <CheckCircle2 className="w-3.5 h-3.5" />}
             </div>
             <div>
-              <CardTitle className="text-sm font-medium">{item.title}</CardTitle>
+              <p className="text-sm font-medium">{item.title}</p>
               <p className="text-xs text-muted-foreground">{item.contact?.name}</p>
             </div>
           </div>
-          <Badge variant="outline" className={cn("text-xs", priorityColors[item.priority])}>
+          <Badge variant="outline" className={cn("text-[10px]", priorityColors[item.priority])}>
             {getUrgencyLabel(item.dueDate)}
           </Badge>
         </div>
-      </CardHeader>
-      <CardContent className="p-3 pt-0 space-y-2">
+
         {item.description && (
-          <p className="text-xs text-muted-foreground">{item.description}</p>
+          <p className="text-xs text-muted-foreground mt-2">{item.description}</p>
         )}
 
-        {/* Suggested Message */}
-        {displayMessage ? (
-          <div className="bg-muted/50 rounded-md p-2 text-xs">
-            <p className="text-muted-foreground mb-2">{displayMessage}</p>
+        {/* Actions */}
+        <div className="flex items-center gap-1.5 mt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-6 text-xs gap-1 flex-1"
+            onClick={onComplete}
+          >
+            <CheckCircle2 className="w-3 h-3" />
+            Done
+          </Button>
+          
+          {displayMessage ? (
             <Button
               variant="ghost"
               size="sm"
@@ -395,36 +432,31 @@ function ActionCard({
               <Copy className="w-3 h-3" />
               Copy
             </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 text-xs gap-1"
+              onClick={onGenerateMessage}
+              disabled={isGenerating}
+            >
+              {isGenerating ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <Sparkles className="w-3 h-3" />
+              )}
+              AI
+            </Button>
+          )}
+        </div>
+
+        {/* Generated Message */}
+        {displayMessage && (
+          <div className="mt-2 p-2 bg-muted/50 rounded-md">
+            <p className="text-xs text-muted-foreground">{displayMessage}</p>
           </div>
-        ) : (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 text-xs gap-1 w-full"
-            onClick={onGenerateMessage}
-            disabled={isGenerating}
-          >
-            {isGenerating ? (
-              <Loader2 className="w-3 h-3 animate-spin" />
-            ) : (
-              <Sparkles className="w-3 h-3" />
-            )}
-            {isGenerating ? 'Generating...' : 'Generate message'}
-          </Button>
         )}
-
-        <Separator />
-
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full h-7 text-xs gap-1"
-          onClick={onComplete}
-        >
-          <CheckCircle2 className="w-3 h-3" />
-          Mark Complete
-        </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

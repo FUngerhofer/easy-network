@@ -7,6 +7,7 @@ import { CenterNode } from './CenterNode';
 interface NetworkGraphProps {
   contacts: Contact[];
   onContactClick: (contact: Contact) => void;
+  selectedLayer?: RelationshipLayer | null;
 }
 
 // Generate a seeded random number based on contact id for consistent positioning
@@ -20,7 +21,7 @@ function seededRandom(seed: string): number {
   return Math.abs(Math.sin(hash)) ;
 }
 
-export function NetworkGraph({ contacts, onContactClick }: NetworkGraphProps) {
+export function NetworkGraph({ contacts, onContactClick, selectedLayer }: NetworkGraphProps) {
   const [hoveredLayer, setHoveredLayer] = useState<RelationshipLayer | null>(null);
   const [contactAngles, setContactAngles] = useState<Record<string, number>>({});
 
@@ -32,7 +33,7 @@ export function NetworkGraph({ contacts, onContactClick }: NetworkGraphProps) {
     const getLayerBounds = (layer: RelationshipLayer) => {
       const layerIndex = LAYER_ORDER.indexOf(layer);
       const outerRadius = LAYER_CONFIG[layer].radius;
-      const innerRadius = layerIndex > 0 ? LAYER_CONFIG[LAYER_ORDER[layerIndex - 1]].radius + 20 : 50;
+      const innerRadius = layerIndex > 0 ? LAYER_CONFIG[LAYER_ORDER[layerIndex - 1]].radius + 15 : 45;
       return { innerRadius, outerRadius };
     };
 
@@ -80,6 +81,9 @@ export function NetworkGraph({ contacts, onContactClick }: NetworkGraphProps) {
     setContactAngles(prev => ({ ...prev, [contactId]: newAngle }));
   }, []);
 
+  // Determine which layers to show
+  const visibleLayers = selectedLayer ? [selectedLayer] : LAYER_ORDER;
+
   return (
     <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
       {/* Background gradient */}
@@ -99,6 +103,7 @@ export function NetworkGraph({ contacts, onContactClick }: NetworkGraphProps) {
             layer={layer}
             isHovered={hoveredLayer === layer}
             onHover={setHoveredLayer}
+            isVisible={visibleLayers.includes(layer)}
           />
         ))}
 

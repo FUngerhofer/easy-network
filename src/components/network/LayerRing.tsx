@@ -5,11 +5,14 @@ interface LayerRingProps {
   layer: RelationshipLayer;
   isHovered: boolean;
   onHover: (layer: RelationshipLayer | null) => void;
+  isVisible?: boolean;
 }
 
-export function LayerRing({ layer, isHovered, onHover }: LayerRingProps) {
+export function LayerRing({ layer, isHovered, onHover, isVisible = true }: LayerRingProps) {
   const config = LAYER_CONFIG[layer];
   const diameter = config.radius * 2;
+
+  if (!isVisible) return null;
 
   return (
     <div

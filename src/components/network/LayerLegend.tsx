@@ -9,14 +9,22 @@ import {
 
 interface LayerLegendProps {
   activeLayer?: RelationshipLayer | null;
-  onLayerHover?: (layer: RelationshipLayer | null) => void;
+  onLayerClick?: (layer: RelationshipLayer | null) => void;
 }
 
-export function LayerLegend({ activeLayer, onLayerHover }: LayerLegendProps) {
+export function LayerLegend({ activeLayer, onLayerClick }: LayerLegendProps) {
+  const handleClick = (layer: RelationshipLayer) => {
+    if (activeLayer === layer) {
+      onLayerClick?.(null); // Deselect if clicking the same layer
+    } else {
+      onLayerClick?.(layer);
+    }
+  };
+
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="glass-panel rounded-lg px-3 py-2 shadow-md animate-fade-in">
-        <div className="flex items-center gap-2">
+      <div className="glass-panel rounded-full px-4 py-2 shadow-lg animate-fade-in">
+        <div className="flex items-center gap-1">
           {LAYER_ORDER.map((layer) => {
             const config = LAYER_CONFIG[layer];
             const isActive = activeLayer === layer;
@@ -26,12 +34,11 @@ export function LayerLegend({ activeLayer, onLayerHover }: LayerLegendProps) {
                 <TooltipTrigger asChild>
                   <button
                     className={cn(
-                      "flex items-center gap-1.5 px-2 py-1 rounded-md transition-all duration-200",
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all duration-200",
                       "hover:bg-accent/50",
-                      isActive && "bg-accent/50"
+                      isActive && "bg-accent ring-2 ring-primary/30"
                     )}
-                    onMouseEnter={() => onLayerHover?.(layer)}
-                    onMouseLeave={() => onLayerHover?.(null)}
+                    onClick={() => handleClick(layer)}
                   >
                     <div 
                       className={cn(
@@ -48,7 +55,7 @@ export function LayerLegend({ activeLayer, onLayerHover }: LayerLegendProps) {
                     </span>
                   </button>
                 </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs">
+                <TooltipContent side="top" className="text-xs">
                   {config.description}
                 </TooltipContent>
               </Tooltip>
@@ -59,12 +66,12 @@ export function LayerLegend({ activeLayer, onLayerHover }: LayerLegendProps) {
           
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex items-center gap-1.5 px-2 py-1">
+              <div className="flex items-center gap-1.5 px-3 py-1.5">
                 <div className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
                 <span className="text-xs text-muted-foreground">Drifting</span>
               </div>
             </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs">
+            <TooltipContent side="top" className="text-xs">
               Contacts needing your attention
             </TooltipContent>
           </Tooltip>
