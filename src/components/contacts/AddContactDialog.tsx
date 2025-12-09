@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -19,7 +19,7 @@ const contactSchema = z.object({
   company: z.string().max(100).optional(),
   role: z.string().max(100).optional(),
   layer: z.enum(['vip', 'inner', 'regular', 'occasional', 'distant']),
-  contact_frequency: z.enum(['weekly', 'biweekly', 'monthly', 'quarterly', 'yearly']),
+  contact_frequency: z.enum(['none', 'weekly', 'biweekly', 'monthly', 'quarterly', 'yearly']),
   birthday: z.string().optional(),
   notes: z.string().max(2000).optional(),
   tags: z.string().optional(),
@@ -52,22 +52,44 @@ export function AddContactDialog({ open, onOpenChange, editContact }: AddContact
 
   const { register, handleSubmit, formState: { errors }, setValue, watch, reset } = useForm<ContactFormData>({
     resolver: zodResolver(contactSchema),
-    defaultValues: editContact ? {
-      name: editContact.name,
-      email: editContact.email || '',
-      phone: editContact.phone || '',
-      company: editContact.company || '',
-      role: editContact.role || '',
-      layer: editContact.layer,
-      contact_frequency: editContact.contact_frequency,
-      birthday: editContact.birthday || '',
-      notes: editContact.notes || '',
-      tags: editContact.tags?.join(', ') || '',
-    } : {
+    defaultValues: {
       layer: 'regular',
       contact_frequency: 'monthly',
     },
   });
+
+  // Reset form when editContact changes or dialog opens
+  useEffect(() => {
+    if (open) {
+      if (editContact) {
+        reset({
+          name: editContact.name,
+          email: editContact.email || '',
+          phone: editContact.phone || '',
+          company: editContact.company || '',
+          role: editContact.role || '',
+          layer: editContact.layer,
+          contact_frequency: editContact.contact_frequency,
+          birthday: editContact.birthday || '',
+          notes: editContact.notes || '',
+          tags: editContact.tags?.join(', ') || '',
+        });
+      } else {
+        reset({
+          name: '',
+          email: '',
+          phone: '',
+          company: '',
+          role: '',
+          layer: 'regular',
+          contact_frequency: 'monthly',
+          birthday: '',
+          notes: '',
+          tags: '',
+        });
+      }
+    }
+  }, [open, editContact, reset]);
 
   const generateInitials = (name: string) => {
     return name

@@ -1,10 +1,12 @@
-import { X, Mail, Phone, Building2, Briefcase, Calendar, MessageSquare, Gift, Pencil } from 'lucide-react';
-import { Contact, LAYER_CONFIG, FREQUENCY_OPTIONS } from '@/types/contact';
+import { X, Mail, Phone, Building2, Briefcase, Calendar, MessageSquare, Gift, Pencil, FileText, Users, MoreHorizontal, Trash2 } from 'lucide-react';
+import { Contact, LAYER_CONFIG, FREQUENCY_OPTIONS, CONVERSATION_TYPE_OPTIONS, ConversationType } from '@/types/contact';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow, format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useConversations, useDeleteConversation } from '@/hooks/useConversations';
+import { Loader2 } from 'lucide-react';
 
 interface ContactPanelProps {
   contact: Contact | null;
@@ -14,7 +16,18 @@ interface ContactPanelProps {
   onEdit?: () => void;
 }
 
+const conversationIcons: Record<ConversationType, React.ReactNode> = {
+  call: <Phone className="w-3 h-3" />,
+  meeting: <Users className="w-3 h-3" />,
+  email: <Mail className="w-3 h-3" />,
+  note: <FileText className="w-3 h-3" />,
+  other: <MoreHorizontal className="w-3 h-3" />,
+};
+
 export function ContactPanel({ contact, onClose, onLogConversation, onAddOpportunity, onEdit }: ContactPanelProps) {
+  const { data: conversations, isLoading: conversationsLoading } = useConversations(contact?.id);
+  const deleteConversation = useDeleteConversation();
+
   if (!contact) return null;
 
   const config = LAYER_CONFIG[contact.layer];
@@ -23,6 +36,12 @@ export function ContactPanel({ contact, onClose, onLogConversation, onAddOpportu
     : 'Never';
   
   const frequencyLabel = FREQUENCY_OPTIONS.find(f => f.value === contact.contact_frequency)?.label || contact.contact_frequency;
+
+  const handleDeleteConversation = async (conversationId: string) => {
+    if (confirm('Are you sure you want to delete this conversation?')) {
+      await deleteConversation.mutateAsync({ id: conversationId, contactId: contact.id });
+    }
+  };
 
   return (
     <div className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-card border-l border-border shadow-lg z-50 animate-slide-in-right">
@@ -159,6 +178,54 @@ export function ContactPanel({ contact, onClose, onLogConversation, onAddOpportu
               {frequencyLabel}
             </span>
           </div>
+        </div>
+
+        {/* Conversation History */}
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">
+            Conversation History
+          </h3>
+          
+          {conversationsLoading ? (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : conversations && conversations.length > 0 ? (
+            <div className="space-y-2">
+              {conversations.map((conversation) => {
+                const typeConfig = CONVERSATION_TYPE_OPTIONS.find(t => t.value === conversation.type);
+                return (
+                  <div 
+                    key={conversation.id} 
+                    className="p-3 rounded-lg border border-border bg-muted/30 group"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        {conversationIcons[conversation.type as ConversationType]}
+                        <span>{typeConfig?.label || conversation.type}</span>
+                        <span>·</span>
+                        <span>{format(new Date(conversation.occurred_at), 'MMM d, yyyy')}</span>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteConversation(conversation.id)}
+                        className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                    {conversation.title && (
+                      <p className="text-sm font-medium text-foreground mt-1">{conversation.title}</p>
+                    )}
+                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                      {conversation.content}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground py-2">No conversations logged yet.</p>
+          )}
         </div>
 
         {/* Notes */}
