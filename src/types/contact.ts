@@ -1,5 +1,5 @@
 export type RelationshipLayer = 'vip' | 'inner' | 'regular' | 'occasional' | 'distant';
-export type ContactFrequency = 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly';
+export type ContactFrequency = 'none' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly';
 export type ConversationType = 'call' | 'meeting' | 'email' | 'note' | 'other';
 export type OpportunityType = 'birthday' | 'anniversary' | 'follow_up' | 'event' | 'manual';
 export type Priority = 'low' | 'medium' | 'high';
@@ -107,7 +107,8 @@ export const LAYER_CONFIG: Record<RelationshipLayer, {
 
 export const LAYER_ORDER: RelationshipLayer[] = ['vip', 'inner', 'regular', 'occasional', 'distant'];
 
-export const FREQUENCY_OPTIONS: { value: ContactFrequency; label: string; days: number }[] = [
+export const FREQUENCY_OPTIONS: { value: ContactFrequency; label: string; days: number | null }[] = [
+  { value: 'none', label: 'No reminder', days: null },
   { value: 'weekly', label: 'Weekly', days: 7 },
   { value: 'biweekly', label: 'Every 2 weeks', days: 14 },
   { value: 'monthly', label: 'Monthly', days: 30 },

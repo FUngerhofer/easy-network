@@ -96,7 +96,7 @@ export function LogConversationDialog({ open, onOpenChange, contact }: LogConver
       if (!open && isRecording) cancelRecording();
       onOpenChange(open);
     }}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display text-xl">
             Log Conversation with {contact.name}

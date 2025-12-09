@@ -4,6 +4,8 @@ import { Contact, RelationshipLayer, ContactFrequency, FREQUENCY_OPTIONS, Family
 import { useToast } from '@/hooks/use-toast';
 
 function calculateNeedsAttention(contact: Omit<Contact, 'needsAttention'>): boolean {
+  // No reminders for contacts with 'none' frequency
+  if (contact.contact_frequency === 'none') return false;
   if (!contact.last_contact_at) return true;
   
   const lastContact = new Date(contact.last_contact_at);
@@ -11,7 +13,7 @@ function calculateNeedsAttention(contact: Omit<Contact, 'needsAttention'>): bool
   const daysSinceContact = Math.floor((now.getTime() - lastContact.getTime()) / (1000 * 60 * 60 * 24));
   
   const frequencyConfig = FREQUENCY_OPTIONS.find(f => f.value === contact.contact_frequency);
-  const thresholdDays = frequencyConfig ? frequencyConfig.days * 0.8 : 30;
+  const thresholdDays = frequencyConfig?.days ? frequencyConfig.days * 0.8 : 30;
   
   return daysSinceContact >= thresholdDays;
 }
