@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Contact, LAYER_CONFIG, LAYER_ORDER, RelationshipLayer } from '@/types/contact';
 import { ContactNode } from './ContactNode';
 import { LayerRing } from './LayerRing';
@@ -11,6 +11,7 @@ interface NetworkGraphProps {
 
 export function NetworkGraph({ contacts, onContactClick }: NetworkGraphProps) {
   const [hoveredLayer, setHoveredLayer] = useState<RelationshipLayer | null>(null);
+  const [contactAngles, setContactAngles] = useState<Record<string, number>>({});
 
   // Group contacts by layer
   const contactsByLayer = useMemo(() => {
@@ -35,7 +36,7 @@ export function NetworkGraph({ contacts, onContactClick }: NetworkGraphProps) {
 
   // Calculate positions for contacts in each layer
   const positionedContacts = useMemo(() => {
-    const result: Array<{ contact: Contact; x: number; y: number; effectiveLayer: RelationshipLayer }> = [];
+    const result: Array<{ contact: Contact; x: number; y: number; angle: number; radius: number; effectiveLayer: RelationshipLayer }> = [];
 
     LAYER_ORDER.forEach((layer) => {
       const layerContacts = contactsByLayer[layer];
@@ -44,7 +45,8 @@ export function NetworkGraph({ contacts, onContactClick }: NetworkGraphProps) {
       const startAngle = -Math.PI / 2; // Start from top
 
       layerContacts.forEach((contact, index) => {
-        const angle = startAngle + angleStep * index + (layer === 'vip' ? 0 : Math.PI / 6);
+        const defaultAngle = startAngle + angleStep * index + (layer === 'vip' ? 0 : Math.PI / 6);
+        const angle = contactAngles[contact.id] ?? defaultAngle;
         const x = Math.cos(angle) * radius;
         const y = Math.sin(angle) * radius;
         
@@ -52,13 +54,19 @@ export function NetworkGraph({ contacts, onContactClick }: NetworkGraphProps) {
           contact,
           x,
           y,
+          angle,
+          radius,
           effectiveLayer: layer,
         });
       });
     });
 
     return result;
-  }, [contactsByLayer]);
+  }, [contactsByLayer, contactAngles]);
+
+  const handleAngleChange = useCallback((contactId: string, newAngle: number) => {
+    setContactAngles(prev => ({ ...prev, [contactId]: newAngle }));
+  }, []);
 
   return (
     <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
@@ -86,14 +94,17 @@ export function NetworkGraph({ contacts, onContactClick }: NetworkGraphProps) {
         <CenterNode />
 
         {/* Contact nodes */}
-        {positionedContacts.map(({ contact, x, y, effectiveLayer }) => (
+        {positionedContacts.map(({ contact, x, y, angle, radius, effectiveLayer }) => (
           <ContactNode
             key={contact.id}
             contact={contact}
             x={x}
             y={y}
+            angle={angle}
+            radius={radius}
             effectiveLayer={effectiveLayer}
             onClick={() => onContactClick(contact)}
+            onAngleChange={handleAngleChange}
           />
         ))}
       </div>

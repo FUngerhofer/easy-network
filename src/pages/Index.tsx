@@ -1,15 +1,17 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { NetworkGraph } from '@/components/network/NetworkGraph';
 import { LayerLegend } from '@/components/network/LayerLegend';
 import { ContactPanel } from '@/components/network/ContactPanel';
 import { mockContacts } from '@/data/mockContacts';
 import { Contact, RelationshipLayer } from '@/types/contact';
-import { Users, Plus } from 'lucide-react';
+import { Users, Plus, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 const Index = () => {
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [hoveredLayer, setHoveredLayer] = useState<RelationshipLayer | null>(null);
+  const [showOnlyAttention, setShowOnlyAttention] = useState(false);
 
   const handleContactClick = (contact: Contact) => {
     setSelectedContact(contact);
@@ -20,6 +22,13 @@ const Index = () => {
   };
 
   const needsAttentionCount = mockContacts.filter(c => c.needsAttention).length;
+  
+  const filteredContacts = useMemo(() => {
+    if (showOnlyAttention) {
+      return mockContacts.filter(c => c.needsAttention);
+    }
+    return mockContacts;
+  }, [showOnlyAttention]);
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
@@ -40,10 +49,22 @@ const Index = () => {
             </div>
           </div>
 
-          <Button size="sm" className="gap-2">
-            <Plus className="w-4 h-4" />
-            Add Contact
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button 
+              variant={showOnlyAttention ? "default" : "outline"}
+              size="sm" 
+              className={cn("gap-2", showOnlyAttention && "bg-destructive hover:bg-destructive/90")}
+              onClick={() => setShowOnlyAttention(!showOnlyAttention)}
+            >
+              <AlertCircle className="w-4 h-4" />
+              {needsAttentionCount} Need Attention
+            </Button>
+            
+            <Button size="sm" className="gap-2">
+              <Plus className="w-4 h-4" />
+              Add Contact
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -60,7 +81,7 @@ const Index = () => {
 
           {/* Network Graph */}
           <NetworkGraph 
-            contacts={mockContacts}
+            contacts={filteredContacts}
             onContactClick={handleContactClick}
           />
         </div>
