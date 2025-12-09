@@ -31,6 +31,7 @@ export interface Contact {
   updated_at: string;
   // Computed properties for UI
   needsAttention?: boolean;
+  isOverdue?: boolean;
 }
 
 export interface Conversation {

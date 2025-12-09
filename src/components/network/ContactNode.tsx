@@ -155,11 +155,11 @@ export function ContactNode({
         {contact.name.split(' ')[0]}
       </div>
 
-      {/* Attention indicator */}
-      {isDrifted && (
+      {/* Attention indicator - only show for overdue, not upcoming */}
+      {contact.isOverdue && (
         <div 
           className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-destructive animate-pulse"
-          title="Needs attention"
+          title="Overdue"
         />
       )}
     </button>
