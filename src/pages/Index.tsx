@@ -21,13 +21,13 @@ const Index = () => {
   const { data: contacts, isLoading: contactsLoading } = useContacts();
   
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
-  const [hoveredLayer, setHoveredLayer] = useState<RelationshipLayer | null>(null);
+  const [selectedLayer, setSelectedLayer] = useState<RelationshipLayer | null>(null);
   const [showOnlyAttention, setShowOnlyAttention] = useState(false);
   const [showAddContact, setShowAddContact] = useState(false);
   const [showLogConversation, setShowLogConversation] = useState(false);
   const [showAddOpportunity, setShowAddOpportunity] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
-  const [showActionPanel, setShowActionPanel] = useState(true);
+  const [showActionPanel, setShowActionPanel] = useState(false);
 
   // Use mock data if not authenticated, real data if authenticated
   const displayContacts = user ? (contacts || []) : mockContacts;
@@ -64,14 +64,27 @@ const Index = () => {
     navigate('/auth');
   };
 
+  const handleLayerClick = (layer: RelationshipLayer | null) => {
+    setSelectedLayer(layer);
+  };
+
   const needsAttentionCount = displayContacts.filter(c => c.needsAttention).length;
   
   const filteredContacts = useMemo(() => {
-    if (showOnlyAttention) {
-      return displayContacts.filter(c => c.needsAttention);
+    let filtered = displayContacts;
+    
+    // Filter by layer if selected
+    if (selectedLayer) {
+      filtered = filtered.filter(c => c.layer === selectedLayer);
     }
-    return displayContacts;
-  }, [displayContacts, showOnlyAttention]);
+    
+    // Filter by attention if enabled
+    if (showOnlyAttention) {
+      filtered = filtered.filter(c => c.needsAttention);
+    }
+    
+    return filtered;
+  }, [displayContacts, selectedLayer, showOnlyAttention]);
 
   if (authLoading) {
     return (
@@ -145,14 +158,6 @@ const Index = () => {
       {/* Main Content */}
       <main className="pt-20 h-screen">
         <div className="relative h-full">
-          {/* Layer Legend */}
-          <div className="absolute left-6 top-6 z-30">
-            <LayerLegend 
-              activeLayer={hoveredLayer}
-              onLayerHover={setHoveredLayer}
-            />
-          </div>
-
           {/* Network Graph */}
           {contactsLoading && user ? (
             <div className="h-full flex items-center justify-center">
@@ -162,10 +167,27 @@ const Index = () => {
             <NetworkGraph 
               contacts={filteredContacts}
               onContactClick={handleContactClick}
+              selectedLayer={selectedLayer}
             />
           )}
+
+          {/* Layer Legend - Bottom Center */}
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30">
+            <LayerLegend 
+              activeLayer={selectedLayer}
+              onLayerClick={handleLayerClick}
+            />
+          </div>
         </div>
       </main>
+
+      {/* Action Overview Panel - Top Left */}
+      {user && (
+        <ActionOverviewPanel
+          isOpen={showActionPanel}
+          onToggle={() => setShowActionPanel(!showActionPanel)}
+        />
+      )}
 
       {/* Contact Panel */}
       {selectedContact && (
@@ -208,14 +230,6 @@ const Index = () => {
             contact={selectedContact}
           />
         </>
-      )}
-
-      {/* Action Overview Panel */}
-      {user && (
-        <ActionOverviewPanel
-          isOpen={showActionPanel}
-          onToggle={() => setShowActionPanel(!showActionPanel)}
-        />
       )}
     </div>
   );
