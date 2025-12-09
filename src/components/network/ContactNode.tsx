@@ -1,3 +1,4 @@
+import { useState, useRef, useCallback } from 'react';
 import { Contact, LAYER_CONFIG, RelationshipLayer } from '@/types/contact';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -6,27 +7,93 @@ interface ContactNodeProps {
   contact: Contact;
   x: number;
   y: number;
+  angle: number;
+  radius: number;
   effectiveLayer: RelationshipLayer;
   onClick: () => void;
+  onAngleChange?: (contactId: string, newAngle: number) => void;
 }
 
-export function ContactNode({ contact, x, y, effectiveLayer, onClick }: ContactNodeProps) {
+export function ContactNode({ 
+  contact, 
+  x, 
+  y, 
+  angle,
+  radius,
+  effectiveLayer, 
+  onClick,
+  onAngleChange 
+}: ContactNodeProps) {
+  const [isDragging, setIsDragging] = useState(false);
+  const [currentX, setCurrentX] = useState(x);
+  const [currentY, setCurrentY] = useState(y);
+  const nodeRef = useRef<HTMLButtonElement>(null);
+  
   const config = LAYER_CONFIG[effectiveLayer];
   const originalConfig = LAYER_CONFIG[contact.layer];
   const isDrifted = contact.needsAttention;
 
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+    
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      if (!nodeRef.current) return;
+      
+      const parent = nodeRef.current.parentElement;
+      if (!parent) return;
+      
+      const rect = parent.getBoundingClientRect();
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      
+      const mouseX = moveEvent.clientX - rect.left - centerX;
+      const mouseY = moveEvent.clientY - rect.top - centerY;
+      
+      const newAngle = Math.atan2(mouseY, mouseX);
+      const newX = Math.cos(newAngle) * radius;
+      const newY = Math.sin(newAngle) * radius;
+      
+      setCurrentX(newX);
+      setCurrentY(newY);
+      onAngleChange?.(contact.id, newAngle);
+    };
+    
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }, [radius, contact.id, onAngleChange]);
+
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    if (!isDragging) {
+      onClick();
+    }
+  }, [isDragging, onClick]);
+
+  const displayX = isDragging ? currentX : x;
+  const displayY = isDragging ? currentY : y;
+
   return (
     <button
-      onClick={onClick}
+      ref={nodeRef}
+      onClick={handleClick}
+      onMouseDown={handleMouseDown}
       className={cn(
-        "absolute z-20 group cursor-pointer transition-all duration-300",
-        "hover:scale-110 hover:z-30",
-        isDrifted && "animate-drift-out"
+        "absolute z-20 group transition-all duration-300",
+        isDragging ? "cursor-grabbing scale-110 z-40" : "cursor-grab hover:scale-110 hover:z-30",
+        isDrifted && !isDragging && "animate-drift-out"
       )}
       style={{
-        left: `calc(50% + ${x}px)`,
-        top: `calc(50% + ${y}px)`,
+        left: `calc(50% + ${displayX}px)`,
+        top: `calc(50% + ${displayY}px)`,
         transform: 'translate(-50%, -50%)',
+        transition: isDragging ? 'none' : undefined,
       }}
     >
       {/* Ring indicator */}
