@@ -6,6 +6,7 @@ import { ContactPanel } from '@/components/network/ContactPanel';
 import { AddContactDialog } from '@/components/contacts/AddContactDialog';
 import { LogConversationDialog } from '@/components/contacts/LogConversationDialog';
 import { AddOpportunityDialog } from '@/components/contacts/AddOpportunityDialog';
+import { ActionOverviewPanel } from '@/components/actions/ActionOverviewPanel';
 import { mockContacts } from '@/data/mockContacts';
 import { useContacts } from '@/hooks/useContacts';
 import { useAuth } from '@/hooks/useAuth';
@@ -26,6 +27,7 @@ const Index = () => {
   const [showLogConversation, setShowLogConversation] = useState(false);
   const [showAddOpportunity, setShowAddOpportunity] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
+  const [showActionPanel, setShowActionPanel] = useState(true);
 
   // Use mock data if not authenticated, real data if authenticated
   const displayContacts = user ? (contacts || []) : mockContacts;
@@ -206,6 +208,14 @@ const Index = () => {
             contact={selectedContact}
           />
         </>
+      )}
+
+      {/* Action Overview Panel */}
+      {user && (
+        <ActionOverviewPanel
+          isOpen={showActionPanel}
+          onToggle={() => setShowActionPanel(!showActionPanel)}
+        />
       )}
     </div>
   );
