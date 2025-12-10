@@ -266,7 +266,7 @@ export function ActionOverviewPanel({ isOpen, onToggle }: ActionOverviewPanelPro
             </div>
             <p className="text-sm font-medium">Actions</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {todayCount > 0 && (
               <Badge className="text-xs px-1.5 py-0 bg-amber-500 hover:bg-amber-500 text-white border-0">
                 {todayCount}
