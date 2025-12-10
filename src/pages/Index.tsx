@@ -7,14 +7,15 @@ import { ContactPanel } from '@/components/network/ContactPanel';
 import { AddContactDialog } from '@/components/contacts/AddContactDialog';
 import { LogConversationDialog } from '@/components/contacts/LogConversationDialog';
 import { ActionOverviewPanel } from '@/components/actions/ActionOverviewPanel';
+import { NetworkChatInterface } from '@/components/chat/NetworkChatInterface';
 import { mockContacts } from '@/data/mockContacts';
 import { useContacts, useSeedMockContacts } from '@/hooks/useContacts';
 import { useSeedSampleOpportunities } from '@/hooks/useOpportunities';
 import { useAuth } from '@/hooks/useAuth';
 import { Contact, RelationshipLayer } from '@/types/contact';
-import { Users, Plus, LogOut, Loader2, Sparkles } from 'lucide-react';
+import { Users, Plus, LogOut, Loader2, Sparkles, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 const Index = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
@@ -29,6 +30,7 @@ const Index = () => {
   const [showLogConversation, setShowLogConversation] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [showActionPanel, setShowActionPanel] = useState(false);
+  const [showChat, setShowChat] = useState(false);
 
   // Use mock data if not authenticated, real data if authenticated
   const displayContacts = user ? (contacts || []) : mockContacts;
@@ -109,165 +111,193 @@ const Index = () => {
   const showEmptyState = user && !contactsLoading && displayContacts.length === 0;
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-40 glass-panel border-b">
-        <div className="flex items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center">
-              <Users className="w-5 h-5 text-accent-foreground" />
-            </div>
-            <div>
-              <h1 className="text-xl font-semibold text-foreground">
-                Network
-              </h1>
-              <p className="text-xs text-muted-foreground">
-                {displayContacts.length} contacts · {needsAttentionCount} need attention
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Button 
-              size="sm" 
-              className="gap-2"
-              onClick={() => {
-                if (!user) {
-                  navigate('/auth');
-                } else {
-                  setEditingContact(null);
-                  setShowAddContact(true);
-                }
-              }}
-            >
-              <Plus className="w-4 h-4" />
-              Add Contact
-            </Button>
-
-            {user && (
-              <Button variant="ghost" size="sm" onClick={handleSignOut}>
-                <LogOut className="w-4 h-4" />
-              </Button>
-            )}
-
-            {!user && (
-              <Button variant="outline" size="sm" onClick={() => navigate('/auth')}>
-                Sign In
-              </Button>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="pt-20 h-screen">
-        <div className="relative h-full">
-          {/* Empty State for authenticated users with no contacts */}
-          {showEmptyState ? (
-            <div className="h-full flex flex-col items-center justify-center gap-6">
-              <div className="text-center max-w-md">
-                <div className="w-20 h-20 rounded-full bg-accent/20 flex items-center justify-center mx-auto mb-4">
-                  <Users className="w-10 h-10 text-accent-foreground/50" />
-                </div>
-                <h2 className="text-2xl font-display font-semibold mb-2">No contacts yet</h2>
-                <p className="text-muted-foreground mb-6">
-                  Start building your network by adding contacts, or load sample data to explore the app.
-                </p>
-                <div className="flex gap-3 justify-center">
-                  <Button 
-                    onClick={() => {
-                      setEditingContact(null);
-                      setShowAddContact(true);
-                    }}
-                    className="gap-2"
+    <TooltipProvider>
+      <div className="min-h-screen bg-background relative overflow-hidden">
+        {/* Header */}
+        <header className="fixed top-0 left-0 right-0 z-40 glass-panel border-b">
+          <div className="flex items-center justify-between px-6 py-4">
+            <div className="flex items-center gap-3">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button 
+                    onClick={() => setShowChat(!showChat)}
+                    className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center hover:bg-accent/80 transition-colors"
                   >
-                    <Plus className="w-4 h-4" />
-                    Add Contact
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={handleSeedContacts}
-                    disabled={seedMockContacts.isPending || seedSampleOpportunities.isPending}
-                    className="gap-2"
-                  >
-                    {(seedMockContacts.isPending || seedSampleOpportunities.isPending) ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                    {showChat ? (
+                      <Users className="w-5 h-5 text-accent-foreground" />
                     ) : (
-                      <Sparkles className="w-4 h-4" />
+                      <MessageCircle className="w-5 h-5 text-accent-foreground" />
                     )}
-                    Load Sample Data
-                  </Button>
-                </div>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {showChat ? 'View Network' : 'Search with AI'}
+                </TooltipContent>
+              </Tooltip>
+              <div>
+                <h1 className="text-xl font-semibold text-foreground">
+                  {showChat ? 'Search' : 'Network'}
+                </h1>
+                <p className="text-xs text-muted-foreground">
+                  {showChat 
+                    ? 'Describe who you\'re looking for'
+                    : `${displayContacts.length} contacts · ${needsAttentionCount} need attention`
+                  }
+                </p>
               </div>
             </div>
-          ) : contactsLoading && user ? (
-            <div className="h-full flex items-center justify-center">
-              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+
+            <div className="flex items-center gap-3">
+              <Button 
+                size="sm" 
+                className="gap-2"
+                onClick={() => {
+                  if (!user) {
+                    navigate('/auth');
+                  } else {
+                    setEditingContact(null);
+                    setShowAddContact(true);
+                  }
+                }}
+              >
+                <Plus className="w-4 h-4" />
+                Add Contact
+              </Button>
+
+              {user && (
+                <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                  <LogOut className="w-4 h-4" />
+                </Button>
+              )}
+
+              {!user && (
+                <Button variant="outline" size="sm" onClick={() => navigate('/auth')}>
+                  Sign In
+                </Button>
+              )}
             </div>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="pt-20 h-screen">
+          {showChat ? (
+            <NetworkChatInterface 
+              onContactSelect={(contact) => {
+                setSelectedContact(contact);
+                setShowChat(false);
+              }}
+            />
           ) : (
-            <>
-              {/* Network Graph */}
-              <NetworkGraph 
-                contacts={filteredContacts}
-                onContactClick={handleContactClick}
-                selectedLayer={selectedLayer}
-              />
+            <div className="relative h-full">
+              {/* Empty State for authenticated users with no contacts */}
+              {showEmptyState ? (
+                <div className="h-full flex flex-col items-center justify-center gap-6">
+                  <div className="text-center max-w-md">
+                    <div className="w-20 h-20 rounded-full bg-accent/20 flex items-center justify-center mx-auto mb-4">
+                      <Users className="w-10 h-10 text-accent-foreground/50" />
+                    </div>
+                    <h2 className="text-2xl font-display font-semibold mb-2">No contacts yet</h2>
+                    <p className="text-muted-foreground mb-6">
+                      Start building your network by adding contacts, or load sample data to explore the app.
+                    </p>
+                    <div className="flex gap-3 justify-center">
+                      <Button 
+                        onClick={() => {
+                          setEditingContact(null);
+                          setShowAddContact(true);
+                        }}
+                        className="gap-2"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Add Contact
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        onClick={handleSeedContacts}
+                        disabled={seedMockContacts.isPending || seedSampleOpportunities.isPending}
+                        className="gap-2"
+                      >
+                        {(seedMockContacts.isPending || seedSampleOpportunities.isPending) ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Sparkles className="w-4 h-4" />
+                        )}
+                        Load Sample Data
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ) : contactsLoading && user ? (
+                <div className="h-full flex items-center justify-center">
+                  <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <>
+                  {/* Network Graph */}
+                  <NetworkGraph 
+                    contacts={filteredContacts}
+                    onContactClick={handleContactClick}
+                    selectedLayer={selectedLayer}
+                  />
 
-              {/* Layer Legend - Bottom Center */}
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30">
-                <LayerLegend 
-                  activeLayer={selectedLayer}
-                  onLayerClick={handleLayerClick}
-                  showDrifting={showOnlyAttention}
-                  onDriftingClick={handleDriftingClick}
-                />
-              </div>
-            </>
+                  {/* Layer Legend - Bottom Center */}
+                  <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30">
+                    <LayerLegend 
+                      activeLayer={selectedLayer}
+                      onLayerClick={handleLayerClick}
+                      showDrifting={showOnlyAttention}
+                      onDriftingClick={handleDriftingClick}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
           )}
-        </div>
-      </main>
+        </main>
 
-      {/* Action Overview Panel - Top Left (hidden when contact panel is open) */}
-      {user && !showEmptyState && !selectedContact && (
-        <ActionOverviewPanel
-          isOpen={showActionPanel}
-          onToggle={() => setShowActionPanel(!showActionPanel)}
-        />
-      )}
-      {selectedContact && (
-        <>
-          {/* Backdrop */}
-          <div 
-            className="fixed inset-0 bg-foreground/10 backdrop-blur-sm z-40"
-            onClick={handleClosePanel}
+        {/* Action Overview Panel - Top Left (hidden when contact panel is open or chat is shown) */}
+        {user && !showEmptyState && !selectedContact && !showChat && (
+          <ActionOverviewPanel
+            isOpen={showActionPanel}
+            onToggle={() => setShowActionPanel(!showActionPanel)}
           />
-          <ContactPanel 
+        )}
+        {selectedContact && (
+          <>
+            {/* Backdrop */}
+            <div 
+              className="fixed inset-0 bg-foreground/10 backdrop-blur-sm z-40"
+              onClick={handleClosePanel}
+            />
+            <ContactPanel 
+              contact={selectedContact}
+              onClose={handleClosePanel}
+              onLogConversation={handleLogConversation}
+              onEdit={handleEditContact}
+            />
+          </>
+        )}
+
+        {/* Dialogs */}
+        <AddContactDialog
+          open={showAddContact}
+          onOpenChange={(open) => {
+            setShowAddContact(open);
+            if (!open) setEditingContact(null);
+          }}
+          editContact={editingContact || undefined}
+        />
+
+        {selectedContact && (
+          <LogConversationDialog
+            open={showLogConversation}
+            onOpenChange={setShowLogConversation}
             contact={selectedContact}
-            onClose={handleClosePanel}
-            onLogConversation={handleLogConversation}
-            onEdit={handleEditContact}
           />
-        </>
-      )}
-
-      {/* Dialogs */}
-      <AddContactDialog
-        open={showAddContact}
-        onOpenChange={(open) => {
-          setShowAddContact(open);
-          if (!open) setEditingContact(null);
-        }}
-        editContact={editingContact || undefined}
-      />
-
-      {selectedContact && (
-        <LogConversationDialog
-          open={showLogConversation}
-          onOpenChange={setShowLogConversation}
-          contact={selectedContact}
-        />
-      )}
-    </div>
+        )}
+      </div>
+    </TooltipProvider>
   );
 };
 
