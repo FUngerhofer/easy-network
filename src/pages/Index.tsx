@@ -115,18 +115,18 @@ const Index = () => {
       <div className="min-h-screen bg-background relative overflow-hidden">
         {/* Header */}
         <header className="fixed top-0 left-0 right-0 z-40 glass-panel border-b">
-          <div className="flex items-center justify-between px-6 py-4">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between px-3 md:px-6 py-3 md:py-4">
+            <div className="flex items-center gap-2 md:gap-3">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button 
                     onClick={() => setShowChat(!showChat)}
-                    className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center hover:bg-accent/80 transition-colors"
+                    className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-accent flex items-center justify-center hover:bg-accent/80 transition-colors"
                   >
                     {showChat ? (
-                      <Users className="w-5 h-5 text-accent-foreground" />
+                      <Users className="w-4 h-4 md:w-5 md:h-5 text-accent-foreground" />
                     ) : (
-                      <MessageCircle className="w-5 h-5 text-accent-foreground" />
+                      <MessageCircle className="w-4 h-4 md:w-5 md:h-5 text-accent-foreground" />
                     )}
                   </button>
                 </TooltipTrigger>
@@ -135,10 +135,10 @@ const Index = () => {
                 </TooltipContent>
               </Tooltip>
               <div>
-                <h1 className="text-xl font-semibold text-foreground">
+                <h1 className="text-lg md:text-xl font-semibold text-foreground">
                   {showChat ? 'Search' : 'Network'}
                 </h1>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[10px] md:text-xs text-muted-foreground">
                   {showChat 
                     ? 'Describe who you\'re looking for'
                     : `${displayContacts.length} contacts · ${needsAttentionCount} need attention`
@@ -147,10 +147,10 @@ const Index = () => {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 md:gap-3">
               <Button 
                 size="sm" 
-                className="gap-2"
+                className="gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-3"
                 onClick={() => {
                   if (!user) {
                     navigate('/auth');
@@ -161,17 +161,18 @@ const Index = () => {
                 }}
               >
                 <Plus className="w-4 h-4" />
-                Add Contact
+                <span className="hidden sm:inline">Add Contact</span>
+                <span className="sm:hidden">Add</span>
               </Button>
 
               {user && (
-                <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                <Button variant="ghost" size="sm" onClick={handleSignOut} className="px-2">
                   <LogOut className="w-4 h-4" />
                 </Button>
               )}
 
               {!user && (
-                <Button variant="outline" size="sm" onClick={() => navigate('/auth')}>
+                <Button variant="outline" size="sm" onClick={() => navigate('/auth')} className="text-xs">
                   Sign In
                 </Button>
               )}
@@ -180,7 +181,7 @@ const Index = () => {
         </header>
 
         {/* Main Content */}
-        <main className="pt-20 h-screen">
+        <main className="pt-16 md:pt-20 h-screen">
           {showChat ? (
             <NetworkChatInterface 
               onContactSelect={(contact) => {

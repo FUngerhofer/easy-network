@@ -247,10 +247,10 @@ export function ActionOverviewPanel({ isOpen, onToggle }: ActionOverviewPanelPro
   const totalCount = activeItems.length;
 
   return (
-    <div className="fixed top-24 left-6 z-50">
+    <div className="fixed top-20 md:top-24 left-2 md:left-6 z-50">
       <Card className={cn(
         "shadow-xl border-border/50 bg-card/95 backdrop-blur-md transition-all duration-300",
-        isOpen ? "w-[380px]" : "w-auto"
+        isOpen ? "w-[calc(100vw-1rem)] md:w-[380px]" : "w-auto"
       )}>
         {/* Collapsed Header / Toggle */}
         <button
