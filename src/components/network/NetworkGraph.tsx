@@ -1,8 +1,10 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Contact, LAYER_CONFIG, LAYER_ORDER, RelationshipLayer } from '@/types/contact';
 import { ContactNode } from './ContactNode';
 import { LayerRing } from './LayerRing';
 import { CenterNode } from './CenterNode';
+import { Button } from '@/components/ui/button';
+import { ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 
 interface NetworkGraphProps {
   contacts: Contact[];
@@ -24,6 +26,31 @@ function seededRandom(seed: string): number {
 export function NetworkGraph({ contacts, onContactClick, selectedLayer }: NetworkGraphProps) {
   const [hoveredLayer, setHoveredLayer] = useState<RelationshipLayer | null>(null);
   const [contactAngles, setContactAngles] = useState<Record<string, number>>({});
+  const [zoom, setZoom] = useState(1);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile screen size
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Set initial zoom for mobile
+  useEffect(() => {
+    if (isMobile) {
+      setZoom(0.45);
+    } else {
+      setZoom(1);
+    }
+  }, [isMobile]);
+
+  const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.15, 2));
+  const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.15, 0.3));
+  const handleZoomReset = () => setZoom(isMobile ? 0.45 : 1);
 
   // Calculate positions for contacts - drifting on edge, others within ring
   const positionedContacts = useMemo(() => {
@@ -94,8 +121,43 @@ export function NetworkGraph({ contacts, onContactClick, selectedLayer }: Networ
         }}
       />
 
+      {/* Zoom Controls */}
+      <div className="absolute bottom-20 md:bottom-6 right-4 md:right-6 z-30 flex flex-col gap-1">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={handleZoomIn}
+          className="h-9 w-9 md:h-10 md:w-10 bg-card/90 backdrop-blur-sm"
+        >
+          <ZoomIn className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={handleZoomReset}
+          className="h-9 w-9 md:h-10 md:w-10 bg-card/90 backdrop-blur-sm"
+        >
+          <RotateCcw className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={handleZoomOut}
+          className="h-9 w-9 md:h-10 md:w-10 bg-card/90 backdrop-blur-sm"
+        >
+          <ZoomOut className="h-4 w-4" />
+        </Button>
+      </div>
+
       {/* Graph container */}
-      <div className="relative" style={{ width: '900px', height: '900px' }}>
+      <div 
+        className="relative transition-transform duration-200 ease-out"
+        style={{ 
+          width: '900px', 
+          height: '900px',
+          transform: `scale(${zoom})`,
+        }}
+      >
         {/* Layer rings - rendered in reverse order for proper z-index */}
         {[...LAYER_ORDER].reverse().map((layer) => (
           <LayerRing

@@ -106,7 +106,7 @@ export function NetworkChatInterface({ onContactSelect }: NetworkChatInterfacePr
   return (
     <div className="flex flex-col h-full bg-background">
       {/* Messages */}
-      <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+      <ScrollArea className="flex-1 px-3 md:px-4 py-4" ref={scrollRef}>
         <div className="space-y-4 max-w-2xl mx-auto">
           {messages.map((message) => (
             <div
@@ -188,7 +188,7 @@ export function NetworkChatInterface({ onContactSelect }: NetworkChatInterfacePr
       </ScrollArea>
 
       {/* Input */}
-      <div className="border-t bg-background p-4">
+      <div className="border-t bg-background p-3 md:p-4">
         <div className="max-w-2xl mx-auto flex gap-2">
           <Input
             value={input}
