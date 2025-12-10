@@ -118,7 +118,7 @@ const Index = () => {
               <Users className="w-5 h-5 text-accent-foreground" />
             </div>
             <div>
-              <h1 className="text-xl font-display font-semibold text-foreground">
+              <h1 className="text-xl font-semibold text-foreground">
                 Network
               </h1>
               <p className="text-xs text-muted-foreground">
@@ -229,10 +229,12 @@ const Index = () => {
 
       {/* Action Overview Panel - Top Left */}
       {user && !showEmptyState && (
-        <ActionOverviewPanel
-          isOpen={showActionPanel}
-          onToggle={() => setShowActionPanel(!showActionPanel)}
-        />
+        <div className={selectedContact ? "pointer-events-none" : ""}>
+          <ActionOverviewPanel
+            isOpen={showActionPanel}
+            onToggle={() => setShowActionPanel(!showActionPanel)}
+          />
+        </div>
       )}
 
       {/* Contact Panel */}
