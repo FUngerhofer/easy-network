@@ -48,6 +48,15 @@ interface ActionItem {
   isOverdue?: boolean;
 }
 
+const typeColors: Record<string, string> = {
+  birthday: 'border-pink-400',
+  anniversary: 'border-violet-400',
+  follow_up: 'border-sky-400',
+  event: 'border-emerald-400',
+  manual: 'border-slate-400',
+  'contact-reminder': 'border-amber-400',
+};
+
 const typeIcons: Record<string, React.ReactNode> = {
   birthday: <Gift className="w-3.5 h-3.5" />,
   anniversary: <CalendarDays className="w-3.5 h-3.5" />,
@@ -241,7 +250,7 @@ export function ActionOverviewPanel({ isOpen, onToggle }: ActionOverviewPanelPro
     <div className="fixed top-24 left-6 z-50">
       <Card className={cn(
         "shadow-xl border-border/50 bg-card/95 backdrop-blur-md transition-all duration-300",
-        isOpen ? "w-[320px]" : "w-auto"
+        isOpen ? "w-[380px]" : "w-auto"
       )}>
         {/* Collapsed Header / Toggle */}
         <button
@@ -266,7 +275,7 @@ export function ActionOverviewPanel({ isOpen, onToggle }: ActionOverviewPanelPro
           </div>
           <div className="flex items-center gap-2">
             {todayCount > 0 && (
-              <Badge variant="destructive" className="text-xs px-1.5 py-0">
+              <Badge className="text-xs px-1.5 py-0 bg-amber-500 hover:bg-amber-500 text-white border-0">
                 {todayCount}
               </Badge>
             )}
@@ -298,11 +307,9 @@ export function ActionOverviewPanel({ isOpen, onToggle }: ActionOverviewPanelPro
                   </div>
                 ) : (
                   <>
-                    {/* Today & Overdue */}
                     {todayItems.length > 0 && (
                       <div>
-                        <h3 className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                        <h3 className="text-xs font-medium text-muted-foreground mb-2">
                           Today & Overdue
                         </h3>
                         <div className="space-y-2">
@@ -322,11 +329,9 @@ export function ActionOverviewPanel({ isOpen, onToggle }: ActionOverviewPanelPro
                       </div>
                     )}
 
-                    {/* Upcoming */}
                     {upcomingItems.length > 0 && (
                       <div>
-                        <h3 className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                        <h3 className="text-xs font-medium text-muted-foreground mb-2">
                           Upcoming
                         </h3>
                         <div className="space-y-2">
@@ -412,9 +417,14 @@ function ActionCard({
   const opportunityType = item.opportunity?.type || item.type;
   const urgencyLabel = getUrgencyLabel(item.dueDate);
 
+  const typeColor = typeColors[opportunityType] || 'border-slate-400';
+
   if (compact) {
     return (
-      <div className="flex items-center justify-between p-2 rounded-md border border-border bg-card/50 group">
+      <div className={cn(
+        "flex items-center justify-between p-2 rounded-md border-l-2 border bg-card/50 group",
+        typeColor
+      )}>
         <div className="flex items-center gap-2 min-w-0">
           <div className="p-1 rounded bg-muted text-muted-foreground">
             {typeIcons[opportunityType] || <CheckCircle2 className="w-3.5 h-3.5" />}
@@ -448,7 +458,7 @@ function ActionCard({
   }
 
   return (
-    <div className="rounded-lg border border-border bg-card/50 transition-all group">
+    <div className={cn("rounded-lg border-l-2 border bg-card/50 transition-all group", typeColor)}>
       <div className="p-2.5">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2">
