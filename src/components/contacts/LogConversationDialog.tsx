@@ -96,102 +96,103 @@ export function LogConversationDialog({ open, onOpenChange, contact }: LogConver
       if (!open && isRecording) cancelRecording();
       onOpenChange(open);
     }}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="font-display text-xl">
             Log Conversation with {contact.name}
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
-          <div className="space-y-2">
-            <Label>Type</Label>
-            <div className="flex gap-2">
-              {CONVERSATION_TYPE_OPTIONS.map((option) => (
-                <Button
-                  key={option.value}
-                  type="button"
-                  variant={watch('type') === option.value ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setValue('type', option.value)}
-                  className="flex-1"
-                >
-                  {iconMap[option.value]}
-                  <span className="ml-1 hidden sm:inline">{option.label}</span>
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
+          <div className="flex-1 overflow-y-auto space-y-4 mt-4 pr-2">
             <div className="space-y-2">
-              <Label htmlFor="title">Title (optional)</Label>
-              <Input
-                id="title"
-                placeholder="Quick catch-up call"
-                {...register('title')}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="occurred_at">When</Label>
-              <Input
-                id="occurred_at"
-                type="datetime-local"
-                {...register('occurred_at')}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="content">Notes *</Label>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleSummarize}
-                  disabled={!content || summarize.isPending}
-                  className="h-7 text-xs"
-                >
-                  {summarize.isPending ? (
-                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                  ) : (
-                    <Sparkles className="w-3 h-3 mr-1" />
-                  )}
-                  Summarize
-                </Button>
-                <Button
-                  type="button"
-                  variant={isRecording ? 'destructive' : 'ghost'}
-                  size="sm"
-                  onClick={handleVoiceRecord}
-                  disabled={isTranscribing}
-                  className={cn("h-7 text-xs", isRecording && "animate-pulse")}
-                >
-                  {isTranscribing ? (
-                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                  ) : isRecording ? (
-                    <MicOff className="w-3 h-3 mr-1" />
-                  ) : (
-                    <Mic className="w-3 h-3 mr-1" />
-                  )}
-                  {isTranscribing ? 'Transcribing...' : isRecording ? 'Stop' : 'Voice'}
-                </Button>
+              <Label>Type</Label>
+              <div className="flex flex-wrap gap-2">
+                {CONVERSATION_TYPE_OPTIONS.map((option) => (
+                  <Button
+                    key={option.value}
+                    type="button"
+                    variant={watch('type') === option.value ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setValue('type', option.value)}
+                  >
+                    {iconMap[option.value]}
+                    <span className="ml-1">{option.label}</span>
+                  </Button>
+                ))}
               </div>
             </div>
-            <Textarea
-              id="content"
-              placeholder="What did you discuss? Include any personal details, action items, or important information..."
-              rows={6}
-              {...register('content')}
-              className={errors.content ? 'border-destructive' : ''}
-            />
-            {errors.content && <p className="text-xs text-destructive">{errors.content.message}</p>}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">Title (optional)</Label>
+                <Input
+                  id="title"
+                  placeholder="Quick catch-up call"
+                  {...register('title')}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="occurred_at">When</Label>
+                <Input
+                  id="occurred_at"
+                  type="datetime-local"
+                  {...register('occurred_at')}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="content">Notes *</Label>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleSummarize}
+                    disabled={!content || summarize.isPending}
+                    className="h-7 text-xs"
+                  >
+                    {summarize.isPending ? (
+                      <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-3 h-3 mr-1" />
+                    )}
+                    Summarize
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={isRecording ? 'destructive' : 'ghost'}
+                    size="sm"
+                    onClick={handleVoiceRecord}
+                    disabled={isTranscribing}
+                    className={cn("h-7 text-xs", isRecording && "animate-pulse")}
+                  >
+                    {isTranscribing ? (
+                      <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                    ) : isRecording ? (
+                      <MicOff className="w-3 h-3 mr-1" />
+                    ) : (
+                      <Mic className="w-3 h-3 mr-1" />
+                    )}
+                    {isTranscribing ? 'Transcribing...' : isRecording ? 'Stop' : 'Voice'}
+                  </Button>
+                </div>
+              </div>
+              <Textarea
+                id="content"
+                placeholder="What did you discuss? Include any personal details, action items, or important information..."
+                rows={6}
+                {...register('content')}
+                className={errors.content ? 'border-destructive' : ''}
+              />
+              {errors.content && <p className="text-xs text-destructive">{errors.content.message}</p>}
+            </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4">
+          <div className="flex justify-end gap-3 pt-4 flex-shrink-0 border-t mt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
