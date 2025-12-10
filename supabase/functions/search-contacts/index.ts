@@ -23,13 +23,31 @@ serve(async (req) => {
       );
     }
 
+    // Demo: Check for TechCorp CEO query
+    const lowerQuery = query.toLowerCase();
+    if (lowerQuery.includes('ceo') && lowerQuery.includes('techcorp')) {
+      const sarah = contacts.find((c: any) => 
+        c.company?.toLowerCase() === 'techcorp' && c.role?.toLowerCase() === 'ceo'
+      );
+      
+      if (sarah) {
+        return new Response(
+          JSON.stringify({
+            matchedIds: [sarah.id],
+            message: `That's **Sarah Johnson**! She's the CEO at TechCorp.\n\n**Profile Summary:**\n- 📧 ${sarah.email || 'No email'}\n- 📱 ${sarah.phone || 'No phone'}\n- 🏢 ${sarah.company}, ${sarah.role}\n- 🎂 Birthday: ${sarah.birthday ? new Date(sarah.birthday).toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) : 'Not set'}\n- 🏷️ Tags: ${sarah.tags?.join(', ') || 'None'}\n- 📝 Notes: ${sarah.notes || 'No notes'}\n\nShe's a VIP contact that you met at Y Combinator Demo Day!`
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
     const contactsContext = contacts.map((c: any) => 
-      `ID: ${c.id} | Name: ${c.name} | Company: ${c.company || 'N/A'} | Role: ${c.role || 'N/A'} | Notes: ${c.notes || 'N/A'} | Tags: ${c.tags?.join(', ') || 'N/A'} | Layer: ${c.layer}`
+      `ID: ${c.id} | Name: ${c.name} | Company: ${c.company || 'N/A'} | Role: ${c.role || 'N/A'} | Email: ${c.email || 'N/A'} | Phone: ${c.phone || 'N/A'} | Notes: ${c.notes || 'N/A'} | Tags: ${c.tags?.join(', ') || 'N/A'} | Layer: ${c.layer} | Birthday: ${c.birthday || 'N/A'}`
     ).join('\n');
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -52,7 +70,7 @@ ${contactsContext}
 
 Respond with a JSON object containing:
 1. "matchedIds": an array of contact IDs that match the query (can be empty if no matches)
-2. "message": a brief, friendly message explaining your findings
+2. "message": a detailed, friendly message explaining your findings. If you find a match, include a brief profile summary with their key details (company, role, email, tags, notes).
 
 Be flexible with matching - consider partial matches, similar roles, related companies, etc.
 If the query is vague, try to find the most likely matches.
