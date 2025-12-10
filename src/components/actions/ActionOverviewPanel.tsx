@@ -10,9 +10,11 @@ import {
   Copy, 
   Sparkles,
   CalendarDays,
-  AlertTriangle,
+  HandMetal,
   Loader2,
-  ListTodo
+  ListTodo,
+  X,
+  RotateCcw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,19 +48,13 @@ interface ActionItem {
   isOverdue?: boolean;
 }
 
-const priorityColors: Record<string, string> = {
-  high: 'bg-destructive/10 text-destructive border-destructive/20',
-  medium: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
-  low: 'bg-muted text-muted-foreground border-border',
-};
-
 const typeIcons: Record<string, React.ReactNode> = {
   birthday: <Gift className="w-3.5 h-3.5" />,
+  anniversary: <CalendarDays className="w-3.5 h-3.5" />,
   follow_up: <MessageCircle className="w-3.5 h-3.5" />,
-  milestone: <CalendarDays className="w-3.5 h-3.5" />,
-  check_in: <Clock className="w-3.5 h-3.5" />,
+  event: <CalendarDays className="w-3.5 h-3.5" />,
   manual: <CheckCircle2 className="w-3.5 h-3.5" />,
-  'contact-reminder': <AlertTriangle className="w-3.5 h-3.5" />,
+  'contact-reminder': <HandMetal className="w-3.5 h-3.5" />,
 };
 
 function getUrgencyLabel(date: Date | undefined): string {
@@ -106,6 +102,8 @@ export function ActionOverviewPanel({ isOpen, onToggle }: ActionOverviewPanelPro
   const generateMessage = useGenerateSuggestedMessage();
   const [generatingFor, setGeneratingFor] = useState<string | null>(null);
   const [generatedMessages, setGeneratedMessages] = useState<Record<string, string>>({});
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
+  const [showDismissed, setShowDismissed] = useState(false);
 
   const actionItems = useMemo(() => {
     const items: ActionItem[] = [];
@@ -178,7 +176,7 @@ export function ActionOverviewPanel({ isOpen, onToggle }: ActionOverviewPanelPro
       const message = await generateMessage.mutateAsync({
         contactName: item.contact.name,
         contactLayer: item.contact.layer as RelationshipLayer,
-        opportunityType: item.opportunity?.type || 'check_in',
+        opportunityType: item.opportunity?.type || 'follow_up',
         opportunityTitle: item.title,
         opportunityDescription: item.description,
       });
@@ -214,13 +212,30 @@ export function ActionOverviewPanel({ isOpen, onToggle }: ActionOverviewPanelPro
     toast({ title: 'Marked as done', description: 'Conversation logged automatically' });
   };
 
+  const handleDismiss = (itemId: string) => {
+    setDismissedIds(prev => new Set([...prev, itemId]));
+    toast({ title: 'Action dismissed' });
+  };
+
+  const handleRestore = (itemId: string) => {
+    setDismissedIds(prev => {
+      const next = new Set(prev);
+      next.delete(itemId);
+      return next;
+    });
+    toast({ title: 'Action restored' });
+  };
+
   const isLoading = oppsLoading || contactsLoading;
 
-  const todayItems = actionItems.filter(item => item.dueDate && (isToday(item.dueDate) || (isPast(item.dueDate) && !isToday(item.dueDate))));
-  const upcomingItems = actionItems.filter(item => item.dueDate && !isToday(item.dueDate) && !isPast(item.dueDate));
+  const activeItems = actionItems.filter(item => !dismissedIds.has(item.id));
+  const dismissedItems = actionItems.filter(item => dismissedIds.has(item.id));
+
+  const todayItems = activeItems.filter(item => item.dueDate && (isToday(item.dueDate) || (isPast(item.dueDate) && !isToday(item.dueDate))));
+  const upcomingItems = activeItems.filter(item => item.dueDate && !isToday(item.dueDate) && !isPast(item.dueDate));
 
   const todayCount = todayItems.length;
-  const totalCount = actionItems.length;
+  const totalCount = activeItems.length;
 
   return (
     <div className="fixed top-24 left-6 z-50">
@@ -275,7 +290,7 @@ export function ActionOverviewPanel({ isOpen, onToggle }: ActionOverviewPanelPro
                       <Skeleton key={i} className="h-20 w-full" />
                     ))}
                   </div>
-                ) : actionItems.length === 0 ? (
+                ) : activeItems.length === 0 && dismissedItems.length === 0 ? (
                   <div className="text-center py-6 text-muted-foreground">
                     <CheckCircle2 className="w-10 h-10 mx-auto mb-2 opacity-50" />
                     <p className="text-sm font-medium">All caught up!</p>
@@ -287,7 +302,7 @@ export function ActionOverviewPanel({ isOpen, onToggle }: ActionOverviewPanelPro
                     {todayItems.length > 0 && (
                       <div>
                         <h3 className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-destructive" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-primary" />
                           Today & Overdue
                         </h3>
                         <div className="space-y-2">
@@ -300,6 +315,7 @@ export function ActionOverviewPanel({ isOpen, onToggle }: ActionOverviewPanelPro
                               onComplete={() => handleComplete(item)}
                               onCopyMessage={handleCopyMessage}
                               onGenerateMessage={() => handleGenerateMessage(item)}
+                              onDismiss={() => handleDismiss(item.id)}
                             />
                           ))}
                         </div>
@@ -323,10 +339,40 @@ export function ActionOverviewPanel({ isOpen, onToggle }: ActionOverviewPanelPro
                               onComplete={() => handleComplete(item)}
                               onCopyMessage={handleCopyMessage}
                               onGenerateMessage={() => handleGenerateMessage(item)}
+                              onDismiss={() => handleDismiss(item.id)}
                               compact
                             />
                           ))}
                         </div>
+                      </div>
+                    )}
+
+                    {/* Dismissed Section */}
+                    {dismissedItems.length > 0 && (
+                      <div>
+                        <button
+                          onClick={() => setShowDismissed(!showDismissed)}
+                          className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground mb-2 hover:text-foreground transition-colors"
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50" />
+                          Dismissed ({dismissedItems.length})
+                          {showDismissed ? (
+                            <ChevronUp className="w-3 h-3" />
+                          ) : (
+                            <ChevronDown className="w-3 h-3" />
+                          )}
+                        </button>
+                        {showDismissed && (
+                          <div className="space-y-2">
+                            {dismissedItems.map(item => (
+                              <DismissedCard
+                                key={item.id}
+                                item={item}
+                                onRestore={() => handleRestore(item.id)}
+                              />
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
                   </>
@@ -347,6 +393,7 @@ interface ActionCardProps {
   onComplete: () => void;
   onCopyMessage: (message: string) => void;
   onGenerateMessage: () => void;
+  onDismiss: () => void;
   compact?: boolean;
 }
 
@@ -357,20 +404,19 @@ function ActionCard({
   onComplete, 
   onCopyMessage, 
   onGenerateMessage,
+  onDismiss,
   compact = false
 }: ActionCardProps) {
   const [expanded, setExpanded] = useState(false);
   const displayMessage = generatedMessage || item.suggestedMessage;
   const opportunityType = item.opportunity?.type || item.type;
+  const urgencyLabel = getUrgencyLabel(item.dueDate);
 
   if (compact) {
     return (
-      <div className={cn(
-        "flex items-center justify-between p-2 rounded-md border bg-card/50",
-        item.isOverdue && "border-destructive/30"
-      )}>
+      <div className="flex items-center justify-between p-2 rounded-md border border-border bg-card/50 group">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="p-1 rounded bg-primary/10 text-primary">
+          <div className="p-1 rounded bg-muted text-muted-foreground">
             {typeIcons[opportunityType] || <CheckCircle2 className="w-3.5 h-3.5" />}
           </div>
           <div className="min-w-0">
@@ -378,25 +424,35 @@ function ActionCard({
             <p className="text-[10px] text-muted-foreground">{item.contact?.name}</p>
           </div>
         </div>
-        <Badge variant="outline" className={cn("text-[10px] shrink-0", priorityColors[item.priority])}>
-          {getUrgencyLabel(item.dueDate)}
-        </Badge>
+        <div className="flex items-center gap-1.5">
+          <Badge 
+            variant="outline" 
+            className={cn(
+              "text-[10px] shrink-0",
+              urgencyLabel === 'Overdue' 
+                ? "bg-primary/10 text-primary border-primary/20" 
+                : "bg-muted text-muted-foreground border-border"
+            )}
+          >
+            {urgencyLabel}
+          </Badge>
+          <button
+            onClick={onDismiss}
+            className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-muted transition-opacity"
+          >
+            <X className="w-3 h-3 text-muted-foreground" />
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className={cn(
-      "rounded-lg border bg-card/50 transition-all",
-      item.isOverdue && "border-destructive/30"
-    )}>
+    <div className="rounded-lg border border-border bg-card/50 transition-all group">
       <div className="p-2.5">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2">
-            <div className={cn(
-              "p-1.5 rounded-md",
-              item.isOverdue ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
-            )}>
+            <div className="p-1.5 rounded-md bg-muted text-muted-foreground">
               {typeIcons[opportunityType] || <CheckCircle2 className="w-3.5 h-3.5" />}
             </div>
             <div>
@@ -404,9 +460,25 @@ function ActionCard({
               <p className="text-xs text-muted-foreground">{item.contact?.name}</p>
             </div>
           </div>
-          <Badge variant="outline" className={cn("text-[10px]", priorityColors[item.priority])}>
-            {getUrgencyLabel(item.dueDate)}
-          </Badge>
+          <div className="flex items-center gap-1.5">
+            <Badge 
+              variant="outline" 
+              className={cn(
+                "text-[10px]",
+                urgencyLabel === 'Overdue' 
+                  ? "bg-primary/10 text-primary border-primary/20" 
+                  : "bg-muted text-muted-foreground border-border"
+              )}
+            >
+              {urgencyLabel}
+            </Badge>
+            <button
+              onClick={onDismiss}
+              className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-muted transition-opacity"
+            >
+              <X className="w-3 h-3 text-muted-foreground" />
+            </button>
+          </div>
         </div>
 
         {item.description && (
@@ -460,6 +532,38 @@ function ActionCard({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+interface DismissedCardProps {
+  item: ActionItem;
+  onRestore: () => void;
+}
+
+function DismissedCard({ item, onRestore }: DismissedCardProps) {
+  const opportunityType = item.opportunity?.type || item.type;
+  
+  return (
+    <div className="flex items-center justify-between p-2 rounded-md border border-border/50 bg-muted/30 opacity-60">
+      <div className="flex items-center gap-2 min-w-0">
+        <div className="p-1 rounded bg-muted text-muted-foreground">
+          {typeIcons[opportunityType] || <CheckCircle2 className="w-3.5 h-3.5" />}
+        </div>
+        <div className="min-w-0">
+          <p className="text-xs font-medium truncate">{item.title}</p>
+          <p className="text-[10px] text-muted-foreground">{item.contact?.name}</p>
+        </div>
+      </div>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-6 text-xs gap-1"
+        onClick={onRestore}
+      >
+        <RotateCcw className="w-3 h-3" />
+        Restore
+      </Button>
     </div>
   );
 }
