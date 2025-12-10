@@ -171,15 +171,15 @@ export function useDeleteOpportunity() {
 const sampleOpportunities = [
   { title: "Sarah's Birthday", type: 'birthday' as OpportunityType, priority: 'high' as Priority, daysFromNow: -2 },
   { title: "Follow up on investment opportunity", type: 'follow_up' as OpportunityType, priority: 'high' as Priority, daysFromNow: 0, description: "Discuss the Series B terms" },
-  { title: "Work anniversary congratulations", type: 'milestone' as OpportunityType, priority: 'medium' as Priority, daysFromNow: 1, description: "5 years at the company" },
-  { title: "Quarterly check-in", type: 'check_in' as OpportunityType, priority: 'medium' as Priority, daysFromNow: -1 },
-  { title: "Kid's graduation party invite", type: 'milestone' as OpportunityType, priority: 'high' as Priority, daysFromNow: 0, description: "Emma's high school graduation" },
+  { title: "Work anniversary congratulations", type: 'anniversary' as OpportunityType, priority: 'medium' as Priority, daysFromNow: 1, description: "5 years at the company" },
+  { title: "Quarterly check-in", type: 'follow_up' as OpportunityType, priority: 'medium' as Priority, daysFromNow: -1 },
+  { title: "Kid's graduation party invite", type: 'event' as OpportunityType, priority: 'high' as Priority, daysFromNow: 0, description: "Emma's high school graduation" },
   { title: "Book recommendation follow-up", type: 'follow_up' as OpportunityType, priority: 'low' as Priority, daysFromNow: -3, description: "Ask how they liked 'Thinking Fast and Slow'" },
-  { title: "New job congratulations", type: 'milestone' as OpportunityType, priority: 'high' as Priority, daysFromNow: 0, description: "Just became VP of Engineering" },
-  { title: "Wedding anniversary", type: 'milestone' as OpportunityType, priority: 'medium' as Priority, daysFromNow: 1 },
-  { title: "Catch up over coffee", type: 'check_in' as OpportunityType, priority: 'medium' as Priority, daysFromNow: -4, description: "Haven't seen in 3 months" },
+  { title: "New job congratulations", type: 'event' as OpportunityType, priority: 'high' as Priority, daysFromNow: 0, description: "Just became VP of Engineering" },
+  { title: "Wedding anniversary", type: 'anniversary' as OpportunityType, priority: 'medium' as Priority, daysFromNow: 1 },
+  { title: "Catch up over coffee", type: 'manual' as OpportunityType, priority: 'medium' as Priority, daysFromNow: -4, description: "Haven't seen in 3 months" },
   { title: "Conference introduction", type: 'manual' as OpportunityType, priority: 'high' as Priority, daysFromNow: 0, description: "Introduce to potential investor at TechCrunch" },
-  { title: "Baby shower gift", type: 'milestone' as OpportunityType, priority: 'medium' as Priority, daysFromNow: 1 },
+  { title: "Baby shower gift", type: 'event' as OpportunityType, priority: 'medium' as Priority, daysFromNow: 1 },
 ];
 
 export function useSeedSampleOpportunities() {
