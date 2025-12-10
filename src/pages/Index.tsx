@@ -227,17 +227,13 @@ const Index = () => {
         </div>
       </main>
 
-      {/* Action Overview Panel - Top Left */}
-      {user && !showEmptyState && (
-        <div className={selectedContact ? "pointer-events-none" : ""}>
-          <ActionOverviewPanel
-            isOpen={showActionPanel}
-            onToggle={() => setShowActionPanel(!showActionPanel)}
-          />
-        </div>
+      {/* Action Overview Panel - Top Left (hidden when contact panel is open) */}
+      {user && !showEmptyState && !selectedContact && (
+        <ActionOverviewPanel
+          isOpen={showActionPanel}
+          onToggle={() => setShowActionPanel(!showActionPanel)}
+        />
       )}
-
-      {/* Contact Panel */}
       {selectedContact && (
         <>
           {/* Backdrop */}
