@@ -264,14 +264,7 @@ export function ActionOverviewPanel({ isOpen, onToggle }: ActionOverviewPanelPro
             <div className="p-1.5 rounded-md bg-primary/10">
               <ListTodo className="w-4 h-4 text-primary" />
             </div>
-            <div className="text-left">
-              <p className="text-sm font-medium">Actions</p>
-              {!isOpen && (
-                <p className="text-xs text-muted-foreground">
-                  {todayCount > 0 ? `${todayCount} today` : 'All clear'}
-                </p>
-              )}
-            </div>
+            <p className="text-sm font-medium">Actions</p>
           </div>
           <div className="flex items-center gap-2">
             {todayCount > 0 && (
