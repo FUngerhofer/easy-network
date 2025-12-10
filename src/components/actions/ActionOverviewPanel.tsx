@@ -264,11 +264,11 @@ export function ActionOverviewPanel({ isOpen, onToggle }: ActionOverviewPanelPro
             <div className="p-1.5 rounded-md bg-primary/10">
               <ListTodo className="w-4 h-4 text-primary" />
             </div>
-            <p className="text-sm font-display font-medium">Actions</p>
+            <p className="text-sm font-medium">Actions</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 ml-8">
             {todayCount > 0 && (
-              <Badge className="text-xs px-1.5 py-0 bg-amber-500 hover:bg-amber-500 text-white border-0 mr-2">
+              <Badge className="text-xs px-1.5 py-0 bg-amber-500 hover:bg-amber-500 text-white border-0">
                 {todayCount}
               </Badge>
             )}
