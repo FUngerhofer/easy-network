@@ -58,7 +58,7 @@ export function ContactPanel({ contact, onClose, onLogConversation, onEdit }: Co
           >
             <ChevronLeft className="w-5 h-5 text-muted-foreground" />
           </button>
-          <h2 className="text-lg font-display font-semibold text-foreground">
+          <h2 className="text-lg font-semibold text-foreground">
             Add Opportunity
           </h2>
         </div>
@@ -101,7 +101,7 @@ export function ContactPanel({ contact, onClose, onLogConversation, onEdit }: Co
           </Avatar>
 
           <div>
-            <h2 className="text-xl font-display font-semibold text-foreground">
+            <h2 className="text-xl font-semibold text-foreground">
               {contact.name}
             </h2>
             <div className="flex items-center gap-2 mt-1">
