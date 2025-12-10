@@ -197,7 +197,7 @@ export function useSeedMockContacts() {
       if (!user) throw new Error('Not authenticated');
 
       // Prepare contacts for insertion (remove mock ids, add user_id)
-      const contactsToInsert = mockContacts.map(({ id, needsAttention, family_members, ...contact }) => ({
+      const contactsToInsert = mockContacts.map(({ id, needsAttention, isOverdue, family_members, ...contact }) => ({
         ...contact,
         user_id: user.id,
         family_members: family_members ? JSON.parse(JSON.stringify(family_members)) : [],
